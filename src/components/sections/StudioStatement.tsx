@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import React, { useRef } from "react";
+import { TextLink } from "@/components/site/SectionHeading";
 import { Reveal } from "@/components/site/Reveal";
 import { HOME } from "@/lib/site";
 
@@ -35,15 +36,17 @@ export function StudioStatement() {
         </p>
 
         <div className="mt-20 grid gap-10 border-t border-line pt-10 md:mt-28 md:grid-cols-2 md:gap-16">
-          <Reveal>
+          <Reveal className="flex flex-col items-start gap-5">
             <p className="max-w-[44ch] text-[1.0625rem] leading-relaxed text-fg-muted">
               <span className="text-fg">Six platforms shipped</span> {HOME.shipped}
             </p>
+            <TextLink href="/products">See what we&apos;ve built</TextLink>
           </Reveal>
-          <Reveal delay={0.08}>
+          <Reveal delay={0.08} className="flex flex-col items-start gap-5">
             <p className="max-w-[44ch] text-[1.0625rem] leading-relaxed text-fg-muted">
               <span className="text-fg">We work with</span> {HOME.audiences}
             </p>
+            <TextLink href="#process">How an engagement runs</TextLink>
           </Reveal>
         </div>
       </div>

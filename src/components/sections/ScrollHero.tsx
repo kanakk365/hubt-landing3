@@ -4,6 +4,7 @@ import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer
 import { ArrowDown } from "lucide-react";
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BookCall } from "@/components/site/BookCall";
+import { LinkButton } from "@/components/site/LinkButton";
 import { HOME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -318,6 +319,17 @@ export function ScrollHero() {
               </motion.p>
               <motion.div {...rise(2)} className="flex flex-wrap items-center gap-3">
                 <BookCall size="lg" />
+                <LinkButton
+                  href="#process"
+                  trailing={
+                    <ArrowDown
+                      aria-hidden
+                      className="size-4 transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover:translate-y-0.5"
+                    />
+                  }
+                >
+                  How we work
+                </LinkButton>
               </motion.div>
             </div>
           </div>
