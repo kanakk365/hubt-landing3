@@ -31,10 +31,6 @@ export const HOME = {
     "established businesses, startup founders, enterprise IT teams and sports organisations.",
   /** Worlds HubTech has shipped into, cycled in the disciplines heading. */
   worlds: ["operations", "tournaments", "broadcasts", "athletes", "energy networks", "research teams"],
-  video: {
-    cube: { src: "/video/hubtech-cube.mp4", poster: "/video/hubtech-cube.webp" },
-    particles: { src: "/video/hubtech-particles.mp4", poster: "/video/hubtech-particles.webp" },
-  },
 } as const;
 
 export const ANATOMY = [

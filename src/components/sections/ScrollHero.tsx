@@ -2,7 +2,9 @@
 
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import PatternWaves from "@/components/bits/PatternWaves";
+import Threads from "@/components/bits/Threads";
 import { BookCall } from "@/components/site/BookCall";
 import { LinkButton } from "@/components/site/LinkButton";
 import { HOME } from "@/lib/site";
@@ -12,39 +14,23 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Insets of the black box from the stage edges, and its corner radius. */
 type Box = { t: number; r: number; b: number; l: number; rad: number };
-/** Footage centre offset from the stage centre, and its scale over a W × 9W/16 frame. */
-type Shot = { x: number; y: number; s: number };
-type Geo = { W: number; H: number; wide: boolean; A: Box; B: Box; C: Box; vA: Shot; vB: Shot; vC: Shot };
+type Geo = { W: number; H: number; wide: boolean; A: Box; B: Box; C: Box };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const inOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const span = (p: number, a: number, b: number) => clamp((p - a) / (b - a), 0, 1);
 
-// Measured off the footage: the cube's bounding box spans 76% of the frame's
-// height and 41% of its width; the particle shapes span 38% of the width.
-const CUBE_H = 0.76;
-const CUBE_W = 0.41;
-const PARTICLES_W = 0.38;
-
 /**
- * Three states of the box: A fills the stage under the nav, B is a centred
- * card (a band at the top on narrow screens), C is full bleed. `copyH` is the
- * height of the headline block, which the cube must clear.
+ * Three states of the box: A fills the stage inside a white margin under the
+ * black nav, B is a centred card (a band at the top on narrow screens), C is
+ * full bleed.
  */
-function geometry(W: number, H: number, copyH: number): Geo {
+function geometry(W: number, H: number): Geo {
   const wide = W >= 900;
-  const frameH = W * 0.5625;
   const C: Box = { t: 0, r: 0, b: 0, l: 0, rad: 0 };
 
   if (wide) {
-    const A: Box = { t: 88, r: 24, b: 24, l: 24, rad: 24 };
-    const aW = W - A.l - A.r;
-    const aH = H - A.t - A.b;
-    // Room above the copy, less a margin under the box's top edge.
-    const head = 28;
-    const upper = Math.max(aH * 0.42, aH - copyH - 28) - head;
-    const cubeH = Math.min((upper / CUBE_H) * 0.94, (aW * 0.6) / (CUBE_W / 0.5625));
     const cw = clamp(W * 0.3, 320, 500);
     const ch = Math.min(H * 0.66, 640);
     const cy = (72 + H) / 2;
@@ -52,49 +38,36 @@ function geometry(W: number, H: number, copyH: number): Geo {
       W,
       H,
       wide,
-      A,
+      A: { t: 96, r: 24, b: 24, l: 24, rad: 24 },
       B: { t: cy - ch / 2, r: (W - cw) / 2, b: H - cy - ch / 2, l: (W - cw) / 2, rad: 28 },
       C,
-      vA: { x: 0, y: A.t + head + upper / 2 - H / 2, s: cubeH / frameH },
-      vB: { x: 0, y: cy - H / 2, s: (cw * 0.8) / PARTICLES_W / W },
-      vC: { x: 0, y: 0, s: Math.max(1, H / frameH) },
     };
   }
 
-  const A: Box = { t: 72, r: 12, b: 12, l: 12, rad: 20 };
-  const aW = W - A.l - A.r;
-  const aH = H - A.t - A.b;
-  const head = 20;
-  const upper = Math.max(aH * 0.36, aH - copyH - 20) - head;
-  const cubeH = Math.min((upper / CUBE_H) * 0.92, (aW * 0.86) / (CUBE_W / 0.5625));
   const bh = Math.min(H * 0.42, 380);
   return {
     W,
     H,
     wide,
-    A,
-    B: { t: 80, r: 16, b: H - 80 - bh, l: 16, rad: 22 },
+    A: { t: 84, r: 12, b: 12, l: 12, rad: 20 },
+    B: { t: 84, r: 16, b: H - 84 - bh, l: 16, rad: 22 },
     C,
-    vA: { x: 0, y: A.t + head + upper / 2 - H / 2, s: cubeH / frameH },
-    vB: { x: 0, y: 80 + bh / 2 - H / 2, s: ((W - 32) * 0.76) / PARTICLES_W / W },
-    vC: { x: 0, y: 0, s: (W * 0.84) / (CUBE_W / 0.5625) / frameH },
   };
 }
 
 /**
- * The home hero. A white stage holds one black box playing HubTech's footage.
- * Scrolling shrinks the box to a card while the footage changes and two
- * statements pull apart around it, then opens it to full bleed so the page
- * turns black for the section that follows.
+ * The home hero. A white stage holds one black box of drifting threads
+ * (React Bits). Scrolling shrinks the box to a card while the threads give way
+ * to a halftone dot surface and two statements pull apart around it, then
+ * opens it to full bleed so the page turns black for the section that follows.
  */
 export function ScrollHero() {
   const reduce = !!useReducedMotion();
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
-  const frame = useRef<HTMLDivElement>(null);
-  const cube = useRef<HTMLVideoElement>(null);
-  const particles = useRef<HTMLVideoElement>(null);
+  const threads = useRef<HTMLDivElement>(null);
+  const dots = useRef<HTMLDivElement>(null);
   const copy = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const cue = useRef<HTMLDivElement>(null);
@@ -104,41 +77,32 @@ export function ScrollHero() {
 
   const [geo, setGeo] = useState<Geo | null>(null);
   const geoRef = useRef<Geo | null>(null);
-  const inView = useRef(true);
+  // Whichever surface is fully faded out stops animating.
+  const [scene, setScene] = useState<"threads" | "dots" | "both">("threads");
+  const sceneRef = useRef(scene);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
-
-  const footage = useCallback(
-    (el: HTMLVideoElement | null, visible: boolean) => {
-      if (!el) return;
-      if (visible && inView.current && !reduce) {
-        if (el.paused) el.play().catch(() => {});
-      } else if (!el.paused) {
-        el.pause();
-      }
-    },
-    [reduce]
-  );
 
   const render = useCallback(
     (p: number) => {
       const g = geoRef.current;
-      if (!g || !layer.current || !frame.current) return;
+      if (!g || !layer.current) return;
 
       const shrink = inOut(span(p, 0.1, 0.36));
       const open = inOut(span(p, 0.6, 0.84));
       const box = (k: keyof Box) => mix(mix(g.A[k], g.B[k], shrink), g.C[k], open);
-      const shot = (k: keyof Shot) => mix(mix(g.vA[k], g.vB[k], shrink), g.vC[k], open);
 
       const t = box("t");
       layer.current.style.clipPath = `inset(${t}px ${box("r")}px ${box("b")}px ${box("l")}px round ${box("rad")}px)`;
-      frame.current.style.transform = `translate3d(${shot("x")}px, ${shot("y")}px, 0) scale(${shot("s")})`;
 
-      const showCube = clamp(1 - span(p, 0.17, 0.29) + span(p, 0.6, 0.72), 0, 1);
-      if (cube.current) cube.current.style.opacity = String(showCube);
-      if (particles.current) particles.current.style.opacity = String(1 - showCube);
-      footage(cube.current, showCube > 0.01);
-      footage(particles.current, showCube < 0.99);
+      const showThreads = clamp(1 - span(p, 0.17, 0.29) + span(p, 0.6, 0.72), 0, 1);
+      if (threads.current) threads.current.style.opacity = String(showThreads);
+      if (dots.current) dots.current.style.opacity = String(1 - showThreads);
+      const next = showThreads > 0.99 ? "threads" : showThreads < 0.01 ? "dots" : "both";
+      if (sceneRef.current !== next) {
+        sceneRef.current = next;
+        setScene(next);
+      }
 
       const out = span(p, 0.03, 0.14);
       if (copy.current) {
@@ -163,15 +127,8 @@ export function ScrollHero() {
       };
       flank(build.current, 1);
       flank(run.current, -1);
-
-      // The navbar inverts once the box has opened past it.
-      const tone = t < 40 ? "dark" : "light";
-      if (section.current && section.current.dataset.navTone !== tone) {
-        section.current.dataset.navTone = tone;
-        window.dispatchEvent(new Event("hubtech:navtone"));
-      }
     },
-    [footage, reduce]
+    [reduce]
   );
 
   useMotionValueEvent(scrollYProgress, "change", render);
@@ -180,14 +137,13 @@ export function ScrollHero() {
     const st = stage.current;
     if (!st) return;
     const measure = () => {
-      const next = geometry(st.clientWidth, st.clientHeight, copy.current?.offsetHeight ?? 0);
+      const next = geometry(st.clientWidth, st.clientHeight);
       geoRef.current = next;
       setGeo(next);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(st);
-    if (copy.current) ro.observe(copy.current);
     return () => ro.disconnect();
   }, []);
 
@@ -195,17 +151,6 @@ export function ScrollHero() {
   useLayoutEffect(() => {
     render(scrollYProgress.get());
   }, [geo, render, scrollYProgress]);
-
-  useEffect(() => {
-    const el = section.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([entry]) => {
-      inView.current = entry.isIntersecting;
-      render(scrollYProgress.get());
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [render, scrollYProgress]);
 
   const rise = (i: number) => ({
     initial: { opacity: 0, y: 24, filter: "blur(10px)" },
@@ -221,7 +166,6 @@ export function ScrollHero() {
     <section
       ref={section}
       aria-labelledby="hero-title"
-      data-nav-tone="light"
       className="tone-light relative h-[320vh] min-[900px]:h-[400vh]"
     >
       <div ref={stage} className="sticky top-0 h-dvh overflow-hidden">
@@ -253,50 +197,48 @@ export function ScrollHero() {
         {/* The black box: one full-stage layer, clipped to the box's current shape */}
         <div
           ref={layer}
-          className="tokens-dark absolute inset-0 z-10 bg-black text-fg [clip-path:inset(72px_12px_12px_12px_round_20px)] min-[900px]:[clip-path:inset(88px_24px_24px_24px_round_24px)]"
+          className="tokens-dark absolute inset-0 z-10 bg-black text-fg [clip-path:inset(84px_12px_12px_12px_round_20px)] min-[900px]:[clip-path:inset(96px_24px_24px_24px_round_24px)]"
         >
           <div
-            ref={frame}
+            ref={threads}
             aria-hidden
-            className={cn(
-              "absolute left-1/2 top-1/2 origin-center transition-opacity duration-700 will-change-transform",
-              geo ? "opacity-100" : "opacity-0"
-            )}
-            style={{
-              width: geo?.W ?? 0,
-              height: (geo?.W ?? 0) * 0.5625,
-              marginLeft: -(geo?.W ?? 0) / 2,
-              marginTop: -((geo?.W ?? 0) * 0.5625) / 2,
-            }}
+            className={cn("absolute inset-0 transition-opacity duration-1000", geo ? "opacity-100" : "opacity-0")}
           >
-            <video
-              ref={cube}
-              className="absolute inset-0 size-full object-cover"
-              src={HOME.video.cube.src}
-              poster={HOME.video.cube.poster}
-              muted
-              loop
-              playsInline
-              preload="auto"
-              autoPlay={!reduce}
+            <Threads
+              color="#ffffff"
+              lineCount={110}
+              amplitude={1.5}
+              distance={0.35}
+              angle={22}
+              enableMouseInteraction
+              parting={0.35}
+              paused={scene === "dots"}
             />
-            <video
-              ref={particles}
-              // Its ground is #030303; a touch of contrast takes it to the box's black
-              className="absolute inset-0 size-full object-cover opacity-0 [filter:contrast(1.05)]"
-              src={HOME.video.particles.src}
-              poster={HOME.video.particles.poster}
-              muted
-              loop
-              playsInline
-              preload="auto"
+          </div>
+
+          {/* The card's surface, sized to the card so its edge fade lands on the card's edge */}
+          <div
+            ref={dots}
+            aria-hidden
+            className="absolute opacity-0"
+            style={B ? { left: B.l, top: B.t, right: B.r, bottom: B.b } : { inset: 0 }}
+          >
+            <PatternWaves
+              preset="silk"
+              color="#ffffff"
+              backgroundColor="#000000"
+              spacing={geo?.wide ? 9 : 8}
+              fade="edges"
+              fadeSize={0.35}
+              intro={false}
+              paused={scene === "threads"}
             />
           </div>
 
           <div
             ref={scrim}
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-black via-black/70 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black via-black/75 to-transparent"
           />
           <div ref={dim} aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
 
@@ -338,7 +280,7 @@ export function ScrollHero() {
             ref={cue}
             aria-hidden
             className="absolute hidden min-[900px]:block"
-            style={A ? { top: A.t + 28, right: A.r + 32 } : { top: 116, right: 56 }}
+            style={A ? { top: A.t + 28, right: A.r + 32 } : { top: 124, right: 56 }}
           >
             <motion.div
               initial={{ opacity: 0 }}
