@@ -1,5 +1,4 @@
 import React from "react";
-import { TextLink } from "@/components/site/SectionHeading";
 import { Reveal } from "@/components/site/Reveal";
 import { PRINCIPLES } from "@/lib/site";
 
@@ -19,9 +18,6 @@ export function PrincipleGrid() {
             >
               Six rules we hold every project to.
             </h2>
-          </Reveal>
-          <Reveal delay={0.06} className="shrink-0">
-            <TextLink href="/ai#principles">Read the principles</TextLink>
           </Reveal>
         </div>
 

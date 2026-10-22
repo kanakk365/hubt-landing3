@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import React, { useRef } from "react";
 import { BookCall } from "@/components/site/BookCall";
 import { Reveal } from "@/components/site/Reveal";
@@ -11,7 +12,15 @@ import { InquiryForm } from "./InquiryForm";
  * width as it arrives, holding the booking call and the inquiry form, and runs
  * straight into the footer.
  */
-export function ClosingBox() {
+export function ClosingBox({
+  title = "Tell us what has to work.",
+  line = "Book a call with the team that will build it.",
+  lede = "Or leave a few details first. They carry over, so picking a time is the only step left.",
+}: {
+  title?: React.ReactNode;
+  line?: React.ReactNode;
+  lede?: React.ReactNode;
+}) {
   const reduce = useReducedMotion();
   const box = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: box, offset: ["start end", "start 0.2"] });
@@ -30,7 +39,7 @@ export function ClosingBox() {
             id="cta-title"
             className="font-display max-w-[14ch] text-[clamp(2.6rem,0.9rem+5vw,6rem)] font-[420] leading-[0.96] tracking-[-0.04em] text-fg [font-stretch:106%]"
           >
-            Tell us what has to work.
+            {title}
           </h2>
         </Reveal>
       </div>
@@ -44,10 +53,10 @@ export function ClosingBox() {
         <div className="container-site grid gap-14 py-20 md:py-28 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-20">
           <div className="flex flex-col items-start gap-8">
             <p className="max-w-[30ch] font-display text-[clamp(1.5rem,1.1rem+1vw,2rem)] font-[440] leading-[1.15] tracking-[-0.03em] text-fg [font-stretch:104%]">
-              Book a call with the team that will build it.
+              {line}
             </p>
             <p className="max-w-[40ch] text-[1.0625rem] leading-relaxed text-fg-muted">
-              Or leave a few details first. They carry over, so picking a time is the only step left.
+              {lede}
             </p>
             <BookCall size="lg" />
           </div>

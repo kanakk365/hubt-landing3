@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import { ArrowDown } from "lucide-react";
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import PatternWaves from "@/components/bits/PatternWaves";
@@ -24,7 +25,7 @@ const span = (p: number, a: number, b: number) => clamp((p - a) / (b - a), 0, 1)
 /**
  * Three states of the box: A fills the stage inside a white margin under the
  * black nav, B is a centred card (a band at the top on narrow screens), C is
- * full bleed.
+ * full bleed, the black ground of the statement that follows.
  */
 function geometry(W: number, H: number): Geo {
   const wide = W >= 900;
@@ -59,7 +60,7 @@ function geometry(W: number, H: number): Geo {
  * The home hero. A white stage holds one black box of drifting threads
  * (React Bits). Scrolling shrinks the box to a card while the threads give way
  * to a halftone dot surface and two statements pull apart around it, then
- * opens it to full bleed so the page turns black for the section that follows.
+ * opens it to full bleed, empty, so the studio statement reads straight on.
  */
 export function ScrollHero() {
   const reduce = !!useReducedMotion();
@@ -71,14 +72,13 @@ export function ScrollHero() {
   const copy = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const cue = useRef<HTMLDivElement>(null);
-  const dim = useRef<HTMLDivElement>(null);
   const build = useRef<HTMLDivElement>(null);
   const run = useRef<HTMLDivElement>(null);
 
   const [geo, setGeo] = useState<Geo | null>(null);
   const geoRef = useRef<Geo | null>(null);
   // Whichever surface is fully faded out stops animating.
-  const [scene, setScene] = useState<"threads" | "dots" | "both">("threads");
+  const [scene, setScene] = useState<"threads" | "dots" | "both" | "none">("threads");
   const sceneRef = useRef(scene);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
@@ -89,16 +89,20 @@ export function ScrollHero() {
       if (!g || !layer.current) return;
 
       const shrink = inOut(span(p, 0.1, 0.36));
+      // Full bleed by 0.84; the statement section overlaps the black stage after that.
       const open = inOut(span(p, 0.6, 0.84));
       const box = (k: keyof Box) => mix(mix(g.A[k], g.B[k], shrink), g.C[k], open);
 
       const t = box("t");
       layer.current.style.clipPath = `inset(${t}px ${box("r")}px ${box("b")}px ${box("l")}px round ${box("rad")}px)`;
 
-      const showThreads = clamp(1 - span(p, 0.17, 0.29) + span(p, 0.6, 0.72), 0, 1);
+      // Threads give way to the dots once; the dots fade to plain black as the box opens.
+      const showThreads = 1 - span(p, 0.17, 0.29);
+      const showDots = (1 - showThreads) * (1 - span(p, 0.62, 0.84));
       if (threads.current) threads.current.style.opacity = String(showThreads);
-      if (dots.current) dots.current.style.opacity = String(1 - showThreads);
-      const next = showThreads > 0.99 ? "threads" : showThreads < 0.01 ? "dots" : "both";
+      if (dots.current) dots.current.style.opacity = String(showDots);
+      const next =
+        showThreads > 0.99 ? "threads" : showThreads > 0.01 ? "both" : showDots > 0.01 ? "dots" : "none";
       if (sceneRef.current !== next) {
         sceneRef.current = next;
         setScene(next);
@@ -113,10 +117,9 @@ export function ScrollHero() {
       }
       if (scrim.current) scrim.current.style.opacity = String(1 - out);
       if (cue.current) cue.current.style.opacity = String(1 - span(p, 0, 0.05));
-      if (dim.current) dim.current.style.opacity = String(span(p, 0.9, 1) * 0.6);
 
       const pull = inOut(span(p, 0.25, 0.37));
-      const leave = span(p, 0.6, 0.68);
+      const leave = span(p, 0.6, 0.7);
       const flank = (el: HTMLDivElement | null, dir: 1 | -1) => {
         if (!el) return;
         el.style.opacity = String(pull * (1 - leave));
@@ -166,7 +169,7 @@ export function ScrollHero() {
     <section
       ref={section}
       aria-labelledby="hero-title"
-      className="tone-light relative h-[320vh] min-[900px]:h-[400vh]"
+      className="tone-light relative h-[300vh] min-[900px]:h-[360vh]"
     >
       <div ref={stage} className="sticky top-0 h-dvh overflow-hidden">
         {/* Statements on the white ground, revealed as the box shrinks between them */}
@@ -212,7 +215,7 @@ export function ScrollHero() {
               angle={22}
               enableMouseInteraction
               parting={0.35}
-              paused={scene === "dots"}
+              paused={scene === "dots" || scene === "none"}
             />
           </div>
 
@@ -231,7 +234,7 @@ export function ScrollHero() {
               fade="edges"
               fadeSize={0.35}
               intro={false}
-              paused={scene === "threads"}
+              paused={scene === "threads" || scene === "none"}
             />
           </div>
 
@@ -240,7 +243,6 @@ export function ScrollHero() {
             aria-hidden
             className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black via-black/75 to-transparent"
           />
-          <div ref={dim} aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
 
           <div
             ref={copy}
