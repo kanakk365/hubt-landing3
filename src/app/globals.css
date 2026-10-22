@@ -253,6 +253,14 @@ html:has([data-world="mono"]) {
 }
 
 /* ── Utilities ──────────────────────────────────────────────── */
+/* The left edge of .container-site's content, for full-bleed tracks that start in line with it. */
+:root {
+  --edge: 1.5rem;
+  @media (min-width: 768px) {
+    --edge: max(2rem, calc((100vw - 1200px) / 2 + 2rem));
+  }
+}
+
 @utility container-site {
   width: 100%;
   max-width: 1200px;

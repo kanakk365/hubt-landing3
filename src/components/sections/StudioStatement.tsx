@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import React, { useRef } from "react";
 import { TextLink } from "@/components/site/SectionHeading";
 import { Reveal } from "@/components/site/Reveal";
@@ -10,12 +11,18 @@ import { HOME } from "@/lib/site";
 export function StudioStatement() {
   const reduce = useReducedMotion();
   const text = useRef<HTMLParagraphElement>(null);
-  const { scrollYProgress } = useScroll({ target: text, offset: ["start 0.85", "end 0.5"] });
+  const { scrollYProgress } = useScroll({ target: text, offset: ["start 0.9", "end 0.55"] });
   const words = HOME.statement.split(" ");
 
   return (
-    <section id="studio" data-nav-tone="dark" aria-labelledby="studio-title" className="tone-dark scroll-mt-0">
-      <div className="container-site pb-24 pt-32 md:pb-36 md:pt-44">
+    // Pulled up over the hero's last, fully black stretch, so the words rise straight out of the opened box.
+    <section
+      id="studio"
+      data-nav-tone="dark"
+      aria-labelledby="studio-title"
+      className="tone-dark relative z-10 -mt-[34vh] scroll-mt-0 min-[900px]:-mt-[45vh]"
+    >
+      <div className="container-site pb-24 pt-10 md:pb-36 md:pt-12">
         <h2 id="studio-title" className="sr-only">
           About HubTech
         </h2>
@@ -40,7 +47,7 @@ export function StudioStatement() {
             <p className="max-w-[44ch] text-[1.0625rem] leading-relaxed text-fg-muted">
               <span className="text-fg">Six platforms shipped</span> {HOME.shipped}
             </p>
-            <TextLink href="/products">See what we&apos;ve built</TextLink>
+            <TextLink href="#what-we-do">What we do</TextLink>
           </Reveal>
           <Reveal delay={0.08} className="flex flex-col items-start gap-5">
             <p className="max-w-[44ch] text-[1.0625rem] leading-relaxed text-fg-muted">
