@@ -24,7 +24,7 @@ const span = (p: number, a: number, b: number) => clamp((p - a) / (b - a), 0, 1)
 
 /**
  * Three states of the box: A fills the stage inside a white margin under the
- * black nav, B is a centred card (a band at the top on narrow screens), C is
+ * white nav, B is a centred card (a band at the top on narrow screens), C is
  * full bleed, the black ground of the statement that follows.
  */
 function geometry(W: number, H: number): Geo {
