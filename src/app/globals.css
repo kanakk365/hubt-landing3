@@ -396,6 +396,34 @@ html:has([data-world="mono"]) {
   }
 }
 
+/* Scroll cue on the AI hero: a short bar drops through a hairline. */
+@keyframes cue-drop {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(300%);
+  }
+}
+
+/* AI architecture: light sweeping across the engine, packets dropping down the wires. */
+@keyframes sweep {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+@keyframes drip {
+  from {
+    top: -4px;
+  }
+  to {
+    top: 100%;
+  }
+}
+
 /* Home's black box already carries the name; the footer's ghost wordmark stays on inner pages. */
 body:has([data-world="mono"]) .footer-wordmark {
   display: none;
