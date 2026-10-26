@@ -1,6 +1,8 @@
 /**
- * Site content for the HubTech landing page. Do not add client names,
- * metrics or dates that HubTech has not confirmed.
+ * Site content for the HubTech marketing pages.
+ * Every product fact here comes from shipped work (screenshots in
+ * public/static/landing-page/projects and the product copy HubTech supplied).
+ * Do not add client names, metrics or dates that HubTech has not confirmed.
  */
 
 export const BOOKING = {
@@ -8,6 +10,34 @@ export const BOOKING = {
   link: "hubtech/demo",
   url: "https://cal.com/hubtech/demo",
 } as const;
+
+export const NAV_LINKS = [{ href: "/ai", label: "AI" }] as const;
+
+export type Accent = "violet" | "cyan" | "blue" | "amber" | "rose" | "lilac" | "lime";
+
+export const AI_PILLARS = [
+  {
+    id: "systems",
+    title: "AI systems",
+    description:
+      "Systems that read, see and hear, understand information and context, find patterns, predict outcomes and recommend actions.",
+    tags: ["Read, see, hear", "Understand", "Predict", "Recommend"],
+  },
+  {
+    id: "agents",
+    title: "Agents and automation",
+    description:
+      "Automation follows a process. An agent pursues an objective: it plans the work, uses approved tools, takes permitted actions and brings people in at defined control points.",
+    tags: ["Deterministic", "AI-assisted", "Controlled agentic"],
+  },
+  {
+    id: "evaluation",
+    title: "Evaluation and observability",
+    description:
+      "Testing against agreed acceptance criteria, regression checks whenever anything changes, and monitoring in production, with the system re-verified after every improvement.",
+    tags: ["Acceptance criteria", "Regression", "Drift", "Monitoring"],
+  },
+] as const;
 
 export const HOME = {
   hero: {
