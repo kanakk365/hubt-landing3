@@ -23,6 +23,11 @@ export const INK = {
   surface: "oklch(0.14 0 0)",
   raised: "oklch(0.18 0 0)",
   ground: "oklch(0.1 0 0)",
+  /** The accent: whatever is live, moving or done. Green, or white on the black-and-white pages (--ink-signal). */
+  signal: "var(--ink-signal, oklch(0.82 0.17 152))",
+  /** Opacity of a signal's trail and its glow; fainter white on the black-and-white pages. */
+  signalTail: "var(--ink-signal-tail, 0.35)",
+  signalHalo: "var(--ink-signal-halo, 0.18)",
 } as const;
 
 export const MONO: React.CSSProperties = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
@@ -236,13 +241,13 @@ export function Signal({
   const common = { d, pathLength: 100, strokeLinecap: "round" as const, fill: "none" };
   return (
     <g aria-hidden>
-      <path {...common} stroke="#fff" strokeOpacity="0.28" strokeWidth={width} strokeDasharray={`${tail} 300`}>
+      <path {...common} style={{ stroke: INK.signal, strokeOpacity: INK.signalTail }} strokeWidth={width} strokeDasharray={`${tail} 300`}>
         {anim}
       </path>
-      <path {...common} stroke="#fff" strokeOpacity="0.12" strokeWidth={width * 3.2} strokeDasharray={`0 ${tail - head} ${head} 300`}>
+      <path {...common} style={{ stroke: INK.signal, strokeOpacity: INK.signalHalo }} strokeWidth={width * 3.2} strokeDasharray={`0 ${tail - head} ${head} 300`}>
         {anim}
       </path>
-      <path {...common} stroke="#fff" strokeWidth={width} strokeDasharray={`0 ${tail - head} ${head} 300`}>
+      <path {...common} style={{ stroke: INK.signal }} strokeWidth={width} strokeDasharray={`0 ${tail - head} ${head} 300`}>
         {anim}
       </path>
     </g>
@@ -252,7 +257,7 @@ export function Signal({
 /** A ring that breathes outward from a point, for live or waiting states. */
 export function Ping({ cx, cy, r = 6, to = 16, dur = 2.4, delay = 0 }: { cx: number; cy: number; r?: number; to?: number; dur?: number; delay?: number }) {
   return (
-    <circle cx={cx} cy={cy} r={r} stroke="#fff" strokeWidth="1" vectorEffect="non-scaling-stroke" aria-hidden>
+    <circle cx={cx} cy={cy} r={r} style={{ stroke: INK.signal }} strokeWidth="1" vectorEffect="non-scaling-stroke" aria-hidden>
       <animate attributeName="r" values={`${r};${to}`} dur={`${dur}s`} begin={`${-delay}s`} repeatCount="indefinite" />
       <animate attributeName="stroke-opacity" values="0.6;0" dur={`${dur}s`} begin={`${-delay}s`} repeatCount="indefinite" />
     </circle>

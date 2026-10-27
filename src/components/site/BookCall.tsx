@@ -50,7 +50,7 @@ const SIZES = {
   lg: { root: "h-[3.25rem] gap-3 pl-6 pr-1.5 text-[0.9375rem]", chip: "size-10" },
 } as const;
 
-/** Pill with an inset arrow chip. Primary is the only solid light on the page. */
+/** Pill with an inset arrow chip. Primary is the one solid green on the page (solid ink on the black-and-white pages). */
 export function PillChip({
   size,
   variant,
@@ -68,8 +68,8 @@ export function PillChip({
         "group/pill inline-flex items-center justify-center rounded-full font-medium tracking-[-0.01em] transition-[background-color,box-shadow,border-color,transform] duration-300 ease-[var(--ease-out-expo)] active:scale-[0.98]",
         SIZES[size].root,
         variant === "primary"
-          ? "bg-fg text-bg shadow-[0_10px_34px_-10px_var(--pill-glow),inset_0_-1px_0_oklch(0_0_0/0.12)] group-hover:bg-[var(--pill-hover-bg)] group-hover:shadow-[0_12px_44px_-8px_var(--pill-glow-hover)]"
-          : "border border-line-strong bg-fg/[0.035] text-fg backdrop-blur-md group-hover:border-fg/25 group-hover:bg-fg/[0.07]",
+          ? "bg-signal text-on-signal shadow-[0_10px_34px_-10px_var(--pill-glow),inset_0_-1px_0_oklch(0_0_0/0.12)] group-hover:bg-[var(--pill-hover-bg)] group-hover:shadow-[0_12px_44px_-8px_var(--pill-glow-hover)]"
+          : "border border-line-strong bg-fg/[0.035] text-fg backdrop-blur-md group-hover:border-signal/45 group-hover:bg-signal/[0.06] bw:group-hover:border-fg/25 bw:group-hover:bg-fg/[0.07]",
         className
       )}
     >
@@ -79,7 +79,7 @@ export function PillChip({
         className={cn(
           "grid shrink-0 place-items-center rounded-full transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:rotate-45",
           SIZES[size].chip,
-          variant === "primary" ? "bg-bg text-fg" : "bg-fg/10 text-fg"
+          variant === "primary" ? "bg-on-signal text-signal" : "bg-fg/10 text-fg group-hover:text-signal"
         )}
       >
         <ArrowUpRight className="size-[15px]" strokeWidth={2} />

@@ -885,6 +885,8 @@ export function NeuralWeb({
     let h = 1;
     let distB = 6;
     let distC = 6;
+    /** 0 at 1024px wide, 1 from 1440px: how much room the stack and its labels have beside the copy. */
+    const roomy = () => Math.min(1, Math.max(0, (w - 1024) / 416));
     const resize = () => {
       w = el.clientWidth || 1;
       h = el.clientHeight || 1;
@@ -894,8 +896,8 @@ export function NeuralWeb({
       const tanH = Math.tan((35 * Math.PI) / 360);
       // Sphere fills ~56% of the height on wide screens, ~68% of the width on tall ones.
       distB = Math.max(2 / (0.56 * 2 * tanH), 2 / (0.68 * 2 * tanH * aspect));
-      // The stack is ~2.7 units tall and ~2.2 wide.
-      distC = Math.max(3.05 / (0.76 * 2 * tanH), 2.1 / ((live.current.wide ? 0.42 : 0.84) * 2 * tanH * aspect));
+      // The stack is ~2.7 units tall and ~2.2 wide; on narrower desktops it stands a little smaller so its labels fit.
+      distC = Math.max(3.05 / ((live.current.wide ? 0.72 + 0.04 * roomy() : 0.76) * 2 * tanH), 2.1 / ((live.current.wide ? 0.42 : 0.84) * 2 * tanH * aspect));
       shared.uAspect.value = aspect;
       shared.uScale.value = Math.min(1.25, Math.max(0.6, h / 900));
       draw(performance.now());
@@ -978,7 +980,7 @@ export function NeuralWeb({
 
       const wideNow = live.current.wide;
       const aspectNow = w / h;
-      root.position.x = (wideNow ? 0.68 : 0) * L;
+      root.position.x = (wideNow ? 0.55 + 0.13 * roomy() : 0) * L;
       root.position.y = wideNow ? 0.06 - 0.04 * L : aspectNow < 0.8 ? 0.95 - 0.75 * L : 0.28 - 0.1 * L;
       const dist = distB + (distC - distB) * L;
       camera.position.set(0, 0, dist);

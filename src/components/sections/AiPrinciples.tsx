@@ -44,17 +44,20 @@ function Row({ index, title, description }: { index: number; title: string; desc
   const rule = useTransform(p, [0, 0.6], [0, 1]);
 
   return (
-    <li ref={ref} className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 py-8 md:grid-cols-[4rem_minmax(0,1.5fr)_minmax(0,1fr)] md:items-baseline md:gap-x-10 md:py-10">
+    <li ref={ref} className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 py-8 md:grid-cols-[4rem_minmax(0,1.9fr)_minmax(0,1fr)] md:items-baseline md:gap-x-10 md:py-9">
       <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-line">
         <motion.span className="absolute inset-0 origin-left bg-fg/50" style={{ scaleX: reduce ? 1 : rule }} />
       </span>
       <span className="font-mono text-[0.8125rem] tabular-nums text-fg-subtle">{String(index + 1).padStart(2, "0")}</span>
-      <motion.h3
-        style={reduce ? undefined : { opacity: ink }}
-        className="font-display text-[clamp(1.75rem,1rem+2.4vw,3.25rem)] font-[440] leading-[1.02] tracking-[-0.038em] text-fg [font-stretch:106%]"
-      >
-        {title}
-      </motion.h3>
+      {/* Sized to its column (cqi) so every principle sets on one line, level with its reason. */}
+      <div className="@container">
+        <motion.h3
+          style={reduce ? undefined : { opacity: ink }}
+          className="font-display text-[clamp(1.5rem,5.5cqi,3rem)] font-[440] leading-[1.08] tracking-[-0.036em] text-fg [font-stretch:106%]"
+        >
+          {title}
+        </motion.h3>
+      </div>
       <motion.p
         style={reduce ? undefined : { x, opacity: fade }}
         className="col-start-2 max-w-[34ch] text-[1rem] leading-relaxed text-fg-muted md:col-start-auto md:text-[1.0625rem]"

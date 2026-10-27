@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+/* On the black-and-white pages (Home and /ai), anywhere in the body. */
+@custom-variant bw (body:has([data-theme="bw"]) &);
 
 /* ── HubTech tokens ─────────────────────────────────────────── */
 @theme {
@@ -24,6 +26,10 @@
   --color-lilac: oklch(0.8 0.1 305);
   --color-lime: oklch(0.9 0.2 128);
   --color-green: oklch(0.8 0.15 158);
+  /* The site's one accent: buttons, live states, progress, the numbers that index things. */
+  --color-signal: oklch(0.82 0.17 152);
+  /* Text and chips set on the accent. */
+  --color-on-signal: oklch(0 0 0);
 
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -107,12 +113,44 @@
   --selection-fg: var(--color-fg);
 }
 
-/* ── Tones: the home page alternates whole sections of black and white ── */
-/* `tokens-*` remaps the palette only; `tone-*` also paints the ground. */
+/* ── Tones: black, except Home and /ai ─────────────────────── */
+/* Sections carry `tone-light` / `tone-dark` (and cards `tokens-*`). On the
+   black pages both paint the same black ground, with green as the only
+   accent. Home and /ai alternate white and black: see the block below.
+   `tone-*` also paints the ground. */
 @layer components {
-  /* :where() keeps the list forgiving where :has() is unsupported. Home sets
-     data-world="mono" so the shared navbar and footer turn neutral black. */
-  :where(.tokens-dark, .tone-dark, body:has([data-world="mono"])) {
+  /* :where() keeps the list forgiving where :has() is unsupported. */
+  :where(.tokens-dark, .tone-dark, .tokens-light, .tone-light, body:has([data-world="mono"])) {
+    --color-bg: oklch(0 0 0);
+    --color-bg-deep: oklch(0 0 0);
+    --color-surface: oklch(0.12 0 0);
+    --color-surface-2: oklch(0.16 0 0);
+    --color-surface-3: oklch(0.2 0 0);
+    --color-line: oklch(1 0 0 / 0.11);
+    --color-line-strong: oklch(1 0 0 / 0.2);
+    --color-fg: oklch(0.975 0 0);
+    --color-fg-muted: oklch(0.76 0 0);
+    --color-fg-subtle: oklch(0.62 0 0);
+    --color-violet: var(--color-signal);
+    --color-violet-strong: oklch(0.72 0.19 152);
+    --color-cyan: oklch(0.85 0 0);
+    --pill-glow: transparent;
+    --pill-glow-hover: transparent;
+    --pill-hover-bg: oklch(0.88 0.15 152);
+    --field-halo: oklch(0.82 0.17 152 / 0.16);
+    --dot-glow: transparent;
+    --selection-bg: var(--color-signal);
+    --selection-fg: oklch(0 0 0);
+    color-scheme: dark;
+  }
+
+  /* ── Home and /ai, the black-and-white pages ──
+     They keep the look they shipped with: whole sections alternate white and
+     black, and the accent is simply the ink, so `signal` resolves to the
+     foreground of whichever tone it sits on. The body:has() prefix reaches
+     the navbar and footer too, which sit outside the page. Wrapped in
+     :where() like the block above, so later rules win as they did before. */
+  :where(body:has([data-theme="bw"]), body:has([data-theme="bw"]) :is(.tokens-dark, .tone-dark)) {
     --color-bg: oklch(0 0 0);
     --color-bg-deep: oklch(0 0 0);
     --color-surface: oklch(0.15 0 0);
@@ -126,6 +164,11 @@
     --color-violet: oklch(0.975 0 0);
     --color-violet-strong: oklch(0.85 0 0);
     --color-cyan: oklch(0.85 0 0);
+    --color-signal: var(--color-fg);
+    --color-on-signal: var(--color-bg);
+    --ink-signal: #fff;
+    --ink-signal-tail: 0.28;
+    --ink-signal-halo: 0.12;
     --pill-glow: oklch(1 0 0 / 0.07);
     --pill-glow-hover: oklch(1 0 0 / 0.14);
     --pill-hover-bg: #fff;
@@ -136,7 +179,7 @@
     color-scheme: dark;
   }
 
-  :where(.tokens-light, .tone-light) {
+  :where(body:has([data-theme="bw"]) :is(.tokens-light, .tone-light)) {
     --color-bg: oklch(0.985 0 0);
     --color-bg-deep: oklch(0.96 0 0);
     --color-surface: oklch(0.955 0 0);
@@ -150,6 +193,8 @@
     --color-violet: oklch(0.145 0 0);
     --color-violet-strong: oklch(0.3 0 0);
     --color-cyan: oklch(0.3 0 0);
+    --color-signal: var(--color-fg);
+    --color-on-signal: var(--color-bg);
     --pill-glow: oklch(0 0 0 / 0.22);
     --pill-glow-hover: oklch(0 0 0 / 0.3);
     --pill-hover-bg: oklch(0 0 0);
@@ -298,19 +343,6 @@ html:has([data-world="mono"]) {
 }
 
 
-/* The one gradient phrase each hero is allowed. */
-@utility text-signal {
-  background-image: linear-gradient(
-    100deg,
-    oklch(0.96 0.02 300) 0%,
-    oklch(0.78 0.14 296) 38%,
-    oklch(0.84 0.12 220) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 /* Raised panel: charcoal fill, hairline border, lit top edge, soft drop. */
 @utility panel {
   position: relative;
@@ -377,7 +409,7 @@ html:has([data-world="mono"]) {
   transition: opacity 400ms var(--ease-out-expo);
   background: radial-gradient(
     420px circle at var(--mx) var(--my),
-    oklch(0.74 0.15 295 / 0.09),
+    oklch(1 0 0 / 0.06),
     transparent 60%
   );
 }

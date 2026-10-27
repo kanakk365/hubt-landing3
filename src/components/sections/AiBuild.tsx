@@ -68,7 +68,7 @@ export function AiBuild() {
           id="ai-build-title"
           index="05"
           label="What we build"
-          title={["What we build with AI."]}
+          title={["What we build", "with AI."]}
           lede="Four kinds of work make up most AI programmes. Each one is built on the same architecture and the same evaluation discipline."
           split
         />

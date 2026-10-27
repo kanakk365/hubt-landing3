@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ScrollHero } from "@/components/sections/ScrollHero";
 import { StudioStatement } from "@/components/sections/StudioStatement";
 import { DisciplineIndex } from "@/components/sections/DisciplineIndex";
@@ -12,17 +12,23 @@ export const metadata: Metadata = {
     "HubTech is an AI and software studio. We design, build and run AI systems, web platforms and mobile apps for businesses, founders and sports organisations.",
 };
 
-/** Home: whole sections alternate white and black, opened and closed by the black box. */
+export const viewport: Viewport = { themeColor: "#fafafa" };
+
+/**
+ * Home: whole sections alternate white and black, opened and closed by the
+ * black box. data-theme="bw" keeps it that way while the rest of the site is
+ * black and green.
+ */
 export default function Home() {
   return (
-    <div data-world="mono">
+    <div data-world="mono" data-theme="bw">
       <ScrollHero />
       <StudioStatement />
       <DisciplineIndex />
       <AiLayers />
       <PrincipleGrid />
       <ProcessLine />
-      <ClosingBox />
+      <ClosingBox balanced={false} />
     </div>
   );
 }

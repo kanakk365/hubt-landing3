@@ -125,26 +125,42 @@ function PinnedHero({ wide }: { wide: boolean }) {
             className="pointer-events-none absolute inset-0"
           >
             <div aria-hidden className="absolute inset-x-0 bottom-0 h-[64%] bg-gradient-to-t from-black from-[30%] via-black/80 to-transparent lg:h-[55%] lg:from-0% lg:via-black/70" />
-            <div className="container-site relative flex h-full flex-col justify-between pb-10 pt-8 md:pb-14 md:pt-10">
-              <Eyebrow index="01" label="AI" />
-              <div className="pointer-events-auto grid items-end gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:gap-16">
-                <h1
-                  id="ai-hero-title"
-                  className="font-display text-[clamp(2.6rem,0.9rem+5vw,5.75rem)] font-[400] leading-[0.96] tracking-[-0.045em] text-fg [font-stretch:110%]"
+            <div className="relative mx-auto flex w-full max-w-[1400px] px-6 md:px-8 h-full flex-col justify-between pb-10 pt-8 md:pb-14 md:pt-10">
+              {/* The scroll cue sits opposite the eyebrow, clear of the title. */}
+              <div className="flex items-start justify-between gap-6">
+                <Eyebrow index="01" label="AI" />
+                <motion.div
+                  aria-hidden
+                  style={{ opacity: cue }}
+                  className="hidden flex-col items-end gap-2 font-mono text-[0.625rem] uppercase tracking-[0.22em] text-fg-subtle lg:flex"
                 >
-                  {["Production AI,", "engineered end to end."].map((line, i) => (
-                    <span key={line} className="block overflow-hidden pb-[0.08em]">
-                      <motion.span
-                        className={cn("block", i === 1 && "text-fg-subtle")}
-                        initial={{ y: "108%", rotate: 2 }}
-                        animate={{ y: "0%", rotate: 0 }}
-                        transition={{ duration: 1.1, ease: EASE, delay: 0.5 + i * 0.1 }}
-                      >
-                        {line}
-                      </motion.span>
-                    </span>
-                  ))}
-                </h1>
+                  Scroll to take it apart
+                  <span className="relative h-8 w-px overflow-hidden bg-line">
+                    <span className="absolute inset-x-0 top-0 h-3 animate-[cue-drop_1.8s_var(--ease-out-expo)_infinite] bg-fg" />
+                  </span>
+                </motion.div>
+              </div>
+              <div className="pointer-events-auto grid items-end gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:gap-16">
+                {/* Sized to its column (cqi) so the title always sets in its two lines. */}
+                <div className="@container">
+                  <h1
+                    id="ai-hero-title"
+                    className="font-display text-[clamp(2.4rem,9.4cqi,5.75rem)] font-[400] leading-[0.96] tracking-[-0.045em] text-fg [font-stretch:110%]"
+                  >
+                    {["Production AI,", "engineered end to end."].map((line, i) => (
+                      <span key={line} className="block overflow-hidden pb-[0.08em]">
+                        <motion.span
+                          className={cn("block", i === 1 && "text-fg-subtle")}
+                          initial={{ y: "108%", rotate: 2 }}
+                          animate={{ y: "0%", rotate: 0 }}
+                          transition={{ duration: 1.1, ease: EASE, delay: 0.5 + i * 0.1 }}
+                        >
+                          {line}
+                        </motion.span>
+                      </span>
+                    ))}
+                  </h1>
+                </div>
                 <motion.div
                   initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -178,25 +194,14 @@ function PinnedHero({ wide }: { wide: boolean }) {
             </motion.div>
           </div>
 
-          <motion.div
-            aria-hidden
-            style={{ opacity: cue }}
-            className="pointer-events-none absolute bottom-5 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[0.625rem] uppercase tracking-[0.22em] text-fg-subtle lg:flex"
-          >
-            Scroll to take it apart
-            <span className="relative h-8 w-px overflow-hidden bg-line">
-              <span className="absolute inset-x-0 top-0 h-3 animate-[cue-drop_1.8s_var(--ease-out-expo)_infinite] bg-fg" />
-            </span>
-          </motion.div>
-
           {/* Layers */}
           <motion.div style={{ opacity: headIn }} className="pointer-events-none absolute inset-0">
-            <div className="container-site relative flex h-full flex-col pb-8 pt-8 md:pt-10 lg:pb-12">
-              <motion.div style={{ y: headY }} className="max-w-[34rem]">
+            <div className="relative mx-auto flex w-full max-w-[1400px] px-6 md:px-8 h-full flex-col pb-8 pt-8 md:pt-10 lg:pb-12">
+              <motion.div style={{ y: headY }} className="@container max-w-[min(34rem,40vw)]">
                 <Eyebrow index="02" label="How production AI works" />
-                <h2 className="font-display mt-6 max-w-[17ch] text-[clamp(1.75rem,0.9rem+1.9vw,2.6rem)] font-[440] leading-[1.04] tracking-[-0.038em] text-fg [font-stretch:106%]">
-                  A model answers questions.{" "}
-                  <span className="text-fg-subtle">A production system has six layers.</span>
+                <h2 className="font-display mt-6 text-[clamp(1.6rem,6.3cqi,2.6rem)] font-[440] leading-[1.06] tracking-[-0.038em] text-fg [font-stretch:106%]">
+                  <span className="block">A model answers questions.</span>
+                  <span className="block text-fg-subtle">A production system has six layers.</span>
                 </h2>
                 <p className="mt-5 max-w-[42ch] text-[1rem] leading-relaxed text-fg-muted max-lg:hidden [@media(max-height:820px)]:hidden">
                   It has to reach the right information, act inside its permissions, and still be right in six months.
@@ -233,9 +238,9 @@ function PinnedHero({ wide }: { wide: boolean }) {
             style={{ opacity: finalIn, y: finalY }}
             className="pointer-events-none absolute inset-x-0 bottom-0"
           >
-            <div className="container-site pb-10 lg:pb-14">
+            <div className="mx-auto w-full max-w-[1400px] px-6 pb-10 md:px-8 lg:pb-14">
               <div className="max-w-[30rem] max-lg:rounded-2xl max-lg:border max-lg:border-line max-lg:bg-black/80 max-lg:p-5 max-lg:backdrop-blur-sm">
-                <p className="font-display text-[clamp(1.25rem,0.95rem+0.9vw,1.75rem)] font-[440] leading-[1.18] tracking-[-0.03em] text-fg [font-stretch:104%]">
+                <p className="font-display text-balance text-[clamp(1.25rem,0.95rem+0.9vw,1.75rem)] font-[440] leading-[1.18] tracking-[-0.03em] text-fg [font-stretch:104%]">
                   Permissions, evaluation, observability and human controls are where most of the engineering actually goes.
                 </p>
                 <p className="mt-3 text-[0.9375rem] leading-relaxed text-fg-muted">
@@ -310,7 +315,7 @@ function LayerLabel({
       />
       <div
         className={cn(
-          "absolute top-0 w-[17rem] -translate-y-1/2 transition-[left] duration-700 ease-[var(--ease-out-expo)]",
+          "absolute top-0 w-[13rem] -translate-y-1/2 transition-[left] duration-700 ease-[var(--ease-out-expo)] xl:w-[14rem] min-[1440px]:w-[15.5rem] min-[1536px]:w-[17rem]",
           on ? "left-[4.5rem]" : "left-[2.5rem]"
         )}
       >
@@ -329,7 +334,7 @@ function LayerLabel({
         </div>
         <div
           className={cn(
-            "grid transition-[grid-template-rows,opacity] duration-500 ease-[var(--ease-out-expo)]",
+            "grid transition-[grid-template-rows,opacity] duration-500 ease-[var(--ease-out-expo)] max-xl:hidden",
             on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
           )}
         >
@@ -444,9 +449,12 @@ function StillHero() {
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/70 to-transparent" />
         <div className="container-site relative flex h-full flex-col justify-end gap-8 pb-14">
           <Eyebrow index="01" label="AI" />
-          <h1 id="ai-hero-title" className="font-display max-w-[16ch] text-[clamp(2.6rem,0.9rem+5vw,5.75rem)] font-[400] leading-[0.96] tracking-[-0.045em] text-fg [font-stretch:110%]">
-            Production AI, <span className="text-fg-subtle">engineered end to end.</span>
-          </h1>
+          <div className="@container">
+            <h1 id="ai-hero-title" className="font-display text-[clamp(2.4rem,9.4cqi,5.75rem)] font-[400] leading-[0.96] tracking-[-0.045em] text-fg [font-stretch:110%]">
+              <span className="block">Production AI,</span>
+              <span className="block text-fg-subtle">engineered end to end.</span>
+            </h1>
+          </div>
           <p className="max-w-[52ch] text-[1.0625rem] leading-relaxed text-fg-muted">
             Systems that reach the right information, act inside their permissions and stay right long after launch. We build the
             model and everything around it that makes it safe to rely on.
@@ -461,8 +469,9 @@ function StillHero() {
       </div>
       <div className="container-site py-24">
         <Eyebrow index="02" label="How production AI works" />
-        <h2 className="font-display mt-6 max-w-[20ch] text-[clamp(1.9rem,1rem+2.2vw,3rem)] font-[440] leading-[1.02] tracking-[-0.04em] text-fg">
-          A model answers questions. <span className="text-fg-subtle">A production system has six layers.</span>
+        <h2 className="font-display mt-6 text-[clamp(1.9rem,1rem+2.2vw,3rem)] font-[440] leading-[1.04] tracking-[-0.04em] text-fg">
+          <span className="block">A model answers questions.</span>
+          <span className="block text-fg-subtle">A production system has six layers.</span>
         </h2>
         <ol className="mt-12 grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {ANATOMY.map((l, i) => (
