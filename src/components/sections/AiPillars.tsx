@@ -80,8 +80,8 @@ function PillarCard({
             {String(index + 1).padStart(2, "0")}
           </span>
         </div>
-        <div className="flex flex-1 flex-col p-7 md:p-8">
-          <h3 className="font-display text-[1.5rem] font-[460] leading-tight tracking-[-0.03em] [font-stretch:104%]">{pillar.title}</h3>
+        <div className="@container flex flex-1 flex-col p-7 md:p-8">
+          <h3 className="font-display text-[clamp(1.25rem,7.6cqi,1.5rem)] font-[460] leading-tight tracking-[-0.03em] [font-stretch:104%]">{pillar.title}</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-fg-muted">{pillar.description}</p>
           <ul className="mt-auto flex flex-wrap gap-2 pt-7">
             {pillar.tags.map((t) => (

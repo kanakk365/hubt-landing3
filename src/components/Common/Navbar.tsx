@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-/** Wordmark, the page links and the one action, on a solid white bar over every section. */
+/** Wordmark, the page links and the one action, on a black bar over every section (white on the black-and-white Home and /ai). */
 const Navbar = () => {
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -36,11 +36,18 @@ const Navbar = () => {
     };
   }, [open]);
 
-  const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+  // /ai-2, the other take on the AI page, lights AI too.
+  const isActive = (href: string) => path === href || path.startsWith(`${href}/`) || path.startsWith(`${href}-`);
+  const bw = path === "/" || path === "/ai";
   const lit = hover ?? NAV_LINKS.find((l) => isActive(l.href))?.href ?? null;
 
   return (
-    <header className="tokens-light fixed inset-x-0 top-0 z-50 border-b border-line bg-bg">
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 border-b border-line",
+        bw ? "tokens-light bg-bg" : "tokens-dark bg-black/80 backdrop-blur-xl"
+      )}
+    >
       <nav
         aria-label="Main"
         className="relative mx-auto flex h-[72px] w-full max-w-[1320px] items-center justify-between gap-6 px-6 md:px-8"
@@ -63,7 +70,7 @@ const Navbar = () => {
                   onBlur={() => setHover(null)}
                   className={cn(
                     "relative z-10 block rounded-full px-4 py-2 text-[0.875rem] font-medium tracking-[-0.01em] transition-colors duration-300",
-                    lit === l.href ? "text-fg" : "text-fg-subtle hover:text-fg"
+                    lit === l.href || active ? "text-fg" : "text-fg-subtle hover:text-fg"
                   )}
                 >
                   {l.label}
@@ -80,7 +87,7 @@ const Navbar = () => {
                   <motion.span
                     layoutId="nav-dot"
                     aria-hidden
-                    className="absolute -bottom-[7px] left-1/2 size-1 -translate-x-1/2 rounded-full bg-fg"
+                    className="absolute -bottom-[7px] left-1/2 size-1 -translate-x-1/2 rounded-full bg-signal"
                   />
                 )}
               </li>

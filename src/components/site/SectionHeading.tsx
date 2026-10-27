@@ -55,14 +55,14 @@ export function TextLink({
     <Link
       href={href}
       className={cn(
-        "group inline-flex items-center gap-1.5 text-[0.9375rem] font-medium text-fg transition-colors hover:text-violet",
+        "group inline-flex items-center gap-1.5 text-[0.9375rem] font-medium text-fg transition-colors hover:text-signal",
         className
       )}
     >
       {children}
       <ArrowRight
         aria-hidden
-        className="size-4 transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover:translate-x-0.5"
+        className="size-4 text-signal transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover:translate-x-0.5"
       />
     </Link>
   );
