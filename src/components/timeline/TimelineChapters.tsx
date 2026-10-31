@@ -21,7 +21,7 @@ export function scrollToChapter(i: number, reduce: boolean) {
  * as you scroll, with a light at its head, and each chapter comes in from
  * either side as it reaches the middle of the screen, its text from one side
  * and its collage from the other. The year on the line lights while its
- * chapter holds the middle, and the line ends at Now. On phones the line runs
+ * chapter holds the middle, and the line ends at Now. On phones and tablets the line runs
  * down the left edge; with reduced motion it is drawn and everything is in place.
  */
 export function TimelineChapters() {
@@ -40,7 +40,7 @@ export function TimelineChapters() {
           initial={reduce ? false : "hidden"}
           whileInView="shown"
           viewport={view}
-          className="font-display text-balance text-[clamp(2rem,1.15rem+2.3vw,3.3rem)] font-[460] leading-[1.04] tracking-[-0.036em] text-fg [font-stretch:104%] md:text-center"
+          className="font-display text-balance text-[clamp(2rem,1.15rem+2.3vw,3.3rem)] font-[460] leading-[1.04] tracking-[-0.036em] text-fg [font-stretch:104%] lg:text-center"
         >
           {["The companies behind HubTech.", "What each one built."].map((line, i) => (
             <span key={line} className="block overflow-hidden pb-[0.06em]">
@@ -57,16 +57,16 @@ export function TimelineChapters() {
 
         <div ref={axis} className="relative mt-12 md:mt-20">
           {/* The line: its track, the part drawn so far, and the light at its head */}
-          <span aria-hidden className="absolute bottom-0 left-[19px] top-0 w-px -translate-x-1/2 bg-line md:left-1/2" />
+          <span aria-hidden className="absolute bottom-0 left-[19px] top-0 w-px -translate-x-1/2 bg-line lg:left-1/2" />
           <motion.span
             aria-hidden
-            className="absolute bottom-0 left-[19px] top-0 w-[2px] origin-top -translate-x-1/2 bg-gradient-to-b from-signal/40 via-signal to-signal shadow-[0_0_14px_oklch(0.82_0.17_152/0.5)] md:left-1/2"
+            className="absolute bottom-0 left-[19px] top-0 w-[2px] origin-top -translate-x-1/2 bg-gradient-to-b from-signal/40 via-signal to-signal shadow-[0_0_14px_oklch(0.82_0.17_152/0.5)] lg:left-1/2"
             style={reduce ? { scaleY: 1 } : { scaleY: drawn }}
           />
           {!reduce && (
             <motion.span
               aria-hidden
-              className="absolute left-[19px] z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[oklch(0.96_0.06_152)] shadow-[0_0_14px_4px_oklch(0.82_0.17_152/0.65)] md:left-1/2"
+              className="absolute left-[19px] z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[oklch(0.96_0.06_152)] shadow-[0_0_14px_4px_oklch(0.82_0.17_152/0.65)] lg:left-1/2"
               style={{ top: head }}
             />
           )}
@@ -78,10 +78,10 @@ export function TimelineChapters() {
         </div>
 
         {/* The line ends at Now, which carries on into the next section. */}
-        <div className="relative flex pb-4 pt-2 md:justify-center">
+        <div className="relative flex pb-4 pt-2 lg:justify-center">
           <a
             href="#now"
-            className="group relative z-10 -ml-[7px] flex items-center gap-2 rounded-full border border-signal bg-black px-3 py-1 text-[0.8125rem] font-medium text-fg shadow-[0_0_0_6px_black] outline-none transition-colors hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 md:ml-0"
+            className="group relative z-10 -ml-[7px] flex items-center gap-2 rounded-full border border-signal bg-black px-3 py-1 text-[0.8125rem] font-medium text-fg shadow-[0_0_0_6px_black] outline-none transition-colors hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 lg:ml-0"
           >
             <span aria-hidden className="relative flex size-2">
               <span className="absolute inset-0 animate-ping rounded-full bg-signal/60 motion-reduce:hidden" />
@@ -106,14 +106,14 @@ function Chapter({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
   return (
     <li
       id={chapter.id}
-      className="relative isolate grid scroll-mt-[96px] grid-cols-1 items-center gap-10 py-14 md:grid-cols-2 md:gap-28 md:py-20"
+      className="relative isolate grid scroll-mt-[96px] grid-cols-1 items-center gap-10 py-14 lg:grid-cols-2 lg:gap-20 lg:py-20"
     >
       {/* The year on the line */}
       <span
         ref={year}
         aria-hidden
         className={cn(
-          "absolute left-[19px] top-[3.5rem] z-10 -translate-x-1/2 rounded-full border bg-black px-2.5 py-1 text-[0.75rem] font-medium tabular-nums transition-[color,border-color,box-shadow] duration-700 md:left-1/2 md:top-1/2 md:-translate-y-1/2",
+          "absolute left-[19px] top-[3.5rem] z-10 -translate-x-1/2 rounded-full border bg-black px-2.5 py-1 text-[0.75rem] font-medium tabular-nums transition-[color,border-color,box-shadow] duration-700 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2",
           lit
             ? "border-signal text-fg shadow-[0_0_22px_oklch(0.82_0.17_152/0.45),0_0_0_6px_black]"
             : "border-line-strong text-fg-subtle shadow-[0_0_0_6px_black]"
@@ -137,7 +137,7 @@ function Chapter({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
         whileInView={{ opacity: 1, x: 0 }}
         viewport={VIEW}
         transition={{ duration: 0.9, ease: EASE }}
-        className={cn("min-w-0 pl-12 md:pl-0", left ? "md:text-right" : "md:order-2")}
+        className={cn("min-w-0 pl-12 lg:pl-0", left ? "lg:text-right" : "lg:order-2")}
       >
         <ChapterBody chapter={chapter} end={left} />
       </motion.div>
@@ -147,9 +147,14 @@ function Chapter({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
         whileInView={{ opacity: 1, x: 0, scale: 1 }}
         viewport={VIEW}
         transition={{ duration: 1, ease: EASE, delay: 0.1 }}
-        className={cn("flex min-w-0 justify-center pl-12 md:pl-0", left ? "md:justify-start" : "md:order-1 md:justify-end")}
+        className={cn(
+          "flex min-w-0 pl-12 lg:pl-0",
+          !left && "lg:order-1 lg:justify-end",
+          // A collage runs past its column to the edge of the screen on its outer side, so it can be as big as the screen allows.
+          chapter.image && (left ? "-mr-6 md:-mr-8 lg:mr-[calc(-1*var(--edge))]" : "-mr-6 md:-mr-8 lg:ml-[calc(-1*var(--edge))] lg:mr-0")
+        )}
       >
-        <Plate chapter={chapter} />
+        <Plate chapter={chapter} left={left} />
       </motion.div>
     </li>
   );
@@ -171,7 +176,7 @@ function ChapterBody({ chapter, end }: { chapter: TimelineChapter; end: boolean 
       <p className="mt-4 text-[0.8125rem] tabular-nums text-fg-muted">
         {chapter.years ? `${chapter.years.from}–${chapter.years.to} · ${chapter.place}` : chapter.place}
       </p>
-      <p className={cn("mt-5 max-w-[48ch] text-[1.0625rem] leading-relaxed text-fg-muted", end && "md:ml-auto")}>{chapter.lede}</p>
+      <p className={cn("mt-5 max-w-[48ch] text-[1.0625rem] leading-relaxed text-fg-muted", end && "lg:ml-auto")}>{chapter.lede}</p>
       {listed && (
         <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {chapter.items.map((item) => (
@@ -185,7 +190,7 @@ function ChapterBody({ chapter, end }: { chapter: TimelineChapter; end: boolean 
       {chapter.facts && (
         <div className="mt-5 flex flex-col gap-1.5 text-[0.8125rem] leading-snug text-fg-subtle">
           {chapter.facts.map((f) => (
-            <p key={f} className={cn("max-w-[62ch]", end && "md:ml-auto")}>
+            <p key={f} className={cn("max-w-[62ch]", end && "lg:ml-auto")}>
               {f}
             </p>
           ))}
@@ -195,8 +200,12 @@ function ChapterBody({ chapter, end }: { chapter: TimelineChapter; end: boolean 
   );
 }
 
-/** The chapter's picture: its collage, cut along its own torn edge, or for DestinationKP the site in four figures. */
-function Plate({ chapter }: { chapter: TimelineChapter }) {
+/**
+ * The chapter's picture: its collage, cut along its own torn edge, or for DestinationKP the site in four figures.
+ * A collage takes the full width it is given, up to 960px tall, and sits against the line (`left` means it is on the
+ * right of it).
+ */
+function Plate({ chapter, left }: { chapter: TimelineChapter; left: boolean }) {
   if (chapter.image) {
     const { image } = chapter;
     return (
@@ -205,8 +214,8 @@ function Plate({ chapter }: { chapter: TimelineChapter }) {
         width={image.width}
         height={image.height}
         alt={image.alt}
-        sizes="(min-width: 768px) 45vw, 100vw"
-        className="h-auto max-h-[min(600px,72svh)] w-auto max-w-full object-contain"
+        sizes="(min-width: 1024px) 50vw, 100vw"
+        className={cn("h-auto max-h-[960px] w-full object-contain object-left", !left && "lg:object-right")}
       />
     );
   }
