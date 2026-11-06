@@ -1,13 +1,12 @@
 "use client";
 
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useRef } from "react";
+import React from "react";
 import { PRODUCTS, XURA_PAGE } from "@/lib/site";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { useMedia } from "@/lib/useMedia";
 import { cn } from "@/lib/utils";
 import { ProductFrame } from "@/components/site/ProductFrame";
 import { PageHero } from "@/components/site/PageHero";
@@ -53,25 +52,18 @@ export function XuraHero() {
   );
 }
 
-/** The platform screen: it rises in tilted back, then lies flat as the page scrolls. */
+/** The platform screen, flat and still: it rises in once with the hero, then stays put. */
 function HeroScreen() {
   const reduce = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "center 0.45"] });
-  const p = useSpring(scrollYProgress, { stiffness: 110, damping: 26, mass: 0.45, restDelta: 0.0001 });
-  const rotateX = useTransform(p, [0.35, 1], [16, 0]);
-  const scale = useTransform(p, [0.35, 1], [0.93, 1]);
 
   return (
-    <div ref={ref} className="container-site mt-16 [perspective:1800px] md:mt-24">
+    <div className="container-site mt-16 md:mt-24">
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: 90 }}
+        initial={reduce ? false : { opacity: 0, y: 48 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: EASE, delay: 0.55 }}
+        transition={{ duration: 1.1, ease: EASE, delay: 0.55 }}
       >
-        <motion.div style={reduce ? undefined : { rotateX, scale }} className="origin-top will-change-transform">
-          <Screen shot={XURA_PAGE.hero} sizes="(min-width: 1280px) 1150px, 100vw" priority />
-        </motion.div>
+        <Screen shot={XURA_PAGE.hero} sizes="(min-width: 1280px) 1150px, 100vw" priority />
       </motion.div>
     </div>
   );
@@ -125,23 +117,12 @@ export function XuraWork() {
 
 function Surface({ surface, index }: { surface: (typeof XURA_PAGE.work)[number]; index: number }) {
   const reduce = useReducedMotion();
-  // On phones the second screen is hidden, so the main one stays put rather than drifting into empty space.
-  const roomy = useMedia("(min-width: 640px)");
-  const section = useRef<HTMLElement>(null);
   const light = index % 2 === 0;
   const flip = index % 2 === 1;
   const second = surface.second;
 
-  // The two screens drift at different speeds as the section passes.
-  const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end start"] });
-  const drift = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.5 });
-  const backY = useTransform(drift, [0, 1], [50, -50]);
-  const frontY = useTransform(drift, [0, 1], [50, -50]);
-  const frontRotate = useTransform(drift, [0, 1], [flip ? -1 : 1, flip ? 0.5 : -0.5]);
-
   return (
     <section
-      ref={section}
       id={surface.id}
       data-nav-tone={light ? "light" : "dark"}
       aria-labelledby={`${surface.id}-title`}
@@ -205,10 +186,10 @@ function Surface({ surface, index }: { surface: (typeof XURA_PAGE.work)[number];
         </div>
 
         <div className={cn("relative min-w-0", second && "sm:pb-24", flip && "lg:order-1")}>
+          {/* Both screens sit flat and still once they have risen in; nothing tilts or drifts with the scroll. */}
           <motion.div
-            style={reduce || !roomy ? undefined : { y: backY }}
-            initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={reduce ? false : { opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 1, ease: EASE }}
           >
@@ -216,7 +197,10 @@ function Surface({ surface, index }: { surface: (typeof XURA_PAGE.work)[number];
           </motion.div>
           {second && (
             <motion.div
-              style={reduce ? undefined : { y: frontY, rotate: frontRotate }}
+              initial={reduce ? false : { opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 1, ease: EASE, delay: 0.15 }}
               className={cn("absolute -bottom-10 hidden w-[44%] sm:block", flip ? "left-0" : "right-0")}
             >
               <Screen shot={second} sizes="(min-width: 1024px) 380px, 50vw" />
