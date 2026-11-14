@@ -6,6 +6,7 @@ import React, { useRef } from "react";
 import { TIMELINE, type TimelineChapter } from "@/lib/timeline";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { cn } from "@/lib/utils";
+import { ChapterFootage } from "./ChapterFootage";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 /** Sides slide in a touch before they are fully on screen, however tall the chapter. */
@@ -104,58 +105,71 @@ function Chapter({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
   const label = chapter.years ? String(chapter.years.from) : chapter.marker;
 
   return (
-    <li
-      id={chapter.id}
-      className="relative isolate grid scroll-mt-[96px] grid-cols-1 items-center gap-10 py-14 lg:grid-cols-2 lg:gap-20 lg:py-20"
-    >
-      {/* The year on the line */}
-      <span
-        ref={year}
-        aria-hidden
-        className={cn(
-          "absolute left-[19px] top-[3.5rem] z-10 -translate-x-1/2 rounded-full border bg-black px-2.5 py-1 text-[0.75rem] font-medium tabular-nums transition-[color,border-color,box-shadow] duration-700 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2",
-          lit
-            ? "border-signal text-fg shadow-[0_0_22px_oklch(0.82_0.17_152/0.45),0_0_0_6px_black]"
-            : "border-line-strong text-fg-subtle shadow-[0_0_0_6px_black]"
-        )}
-      >
-        {label}
-      </span>
+    // Above the line's travelling light, so the light passes under the year and behind the footage.
+    <li id={chapter.id} className="relative isolate z-30 scroll-mt-[96px] py-14 lg:py-20">
+      <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-28">
+        {/* The year on the line */}
+        <span
+          ref={year}
+          aria-hidden
+          className={cn(
+            "absolute left-[19px] top-0 z-10 -translate-x-1/2 rounded-full border bg-black px-2.5 py-1 text-[0.75rem] font-medium tabular-nums transition-[color,border-color,box-shadow] duration-700 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2",
+            lit
+              ? "border-signal text-fg shadow-[0_0_22px_oklch(0.82_0.17_152/0.45),0_0_0_6px_black]"
+              : "border-line-strong text-fg-subtle shadow-[0_0_0_6px_black]"
+          )}
+        >
+          {label}
+        </span>
 
-      {/* A faint green light on the collage's side while the chapter is lit */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-[120%] -translate-x-1/2 transition-opacity duration-1000"
-        style={{
-          opacity: lit ? 1 : 0,
-          background: `radial-gradient(38% 50% at ${left ? "72%" : "28%"} 50%, oklch(0.82 0.17 152 / 0.07), transparent 70%)`,
-        }}
-      />
+        {/* A faint green light on the collage's side while the chapter is lit */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-[120%] -translate-x-1/2 transition-opacity duration-1000"
+          style={{
+            opacity: lit ? 1 : 0,
+            background: `radial-gradient(38% 50% at ${left ? "72%" : "28%"} 50%, oklch(0.82 0.17 152 / 0.07), transparent 70%)`,
+          }}
+        />
 
-      <motion.div
-        initial={reduce ? false : { opacity: 0, x: left ? -40 : 40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={VIEW}
-        transition={{ duration: 0.9, ease: EASE }}
-        className={cn("min-w-0 pl-12 lg:pl-0", left ? "lg:text-right" : "lg:order-2")}
-      >
-        <ChapterBody chapter={chapter} end={left} />
-      </motion.div>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, x: left ? -40 : 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={VIEW}
+          transition={{ duration: 0.9, ease: EASE }}
+          className={cn("min-w-0 pl-12 lg:pl-0", left ? "lg:text-right" : "lg:order-2")}
+        >
+          <ChapterBody chapter={chapter} end={left} />
+        </motion.div>
 
-      <motion.div
-        initial={reduce ? false : { opacity: 0, x: left ? 60 : -60, scale: 0.97 }}
-        whileInView={{ opacity: 1, x: 0, scale: 1 }}
-        viewport={VIEW}
-        transition={{ duration: 1, ease: EASE, delay: 0.1 }}
-        className={cn(
-          "flex min-w-0 pl-12 lg:pl-0",
-          !left && "lg:order-1 lg:justify-end",
-          // A collage runs past its column to the edge of the screen on its outer side, so it can be as big as the screen allows.
-          chapter.image && (left ? "-mr-6 md:-mr-8 lg:mr-[calc(-1*var(--edge))]" : "-mr-6 md:-mr-8 lg:ml-[calc(-1*var(--edge))] lg:mr-0")
-        )}
-      >
-        <Plate chapter={chapter} left={left} />
-      </motion.div>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, x: left ? 60 : -60, scale: 0.97 }}
+          whileInView={{ opacity: 1, x: 0, scale: 1 }}
+          viewport={VIEW}
+          transition={{ duration: 1, ease: EASE, delay: 0.1 }}
+          className={cn(
+            "flex min-w-0 pl-12 lg:pl-0",
+            !left && "lg:order-1 lg:justify-end",
+            // Stacked, a collage runs to the screen's right edge; side by side, it fills the height of the chapter's text.
+            chapter.image && "-mr-6 md:-mr-8 lg:relative lg:mr-0 lg:self-stretch"
+          )}
+        >
+          <Plate chapter={chapter} left={left} />
+        </motion.div>
+      </div>
+
+      {/* The company's own footage, across both sides of the line */}
+      {chapter.media && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VIEW}
+          transition={{ duration: 0.9, ease: EASE }}
+          className="mt-12 pl-12 lg:mt-16 lg:pl-0"
+        >
+          <ChapterFootage media={chapter.media} />
+        </motion.div>
+      )}
     </li>
   );
 }
@@ -202,8 +216,8 @@ function ChapterBody({ chapter, end }: { chapter: TimelineChapter; end: boolean 
 
 /**
  * The chapter's picture: its collage, cut along its own torn edge, or for DestinationKP the site in four figures.
- * A collage takes the full width it is given, up to 960px tall, and sits against the line (`left` means it is on the
- * right of it).
+ * Side by side with the text, a collage is as tall as the text (or as wide as its column, if that comes first) and
+ * sits against the line (`left` means it is on the right of it). Stacked, it takes the full width.
  */
 function Plate({ chapter, left }: { chapter: TimelineChapter; left: boolean }) {
   if (chapter.image) {
@@ -214,8 +228,11 @@ function Plate({ chapter, left }: { chapter: TimelineChapter; left: boolean }) {
         width={image.width}
         height={image.height}
         alt={image.alt}
-        sizes="(min-width: 1024px) 50vw, 100vw"
-        className={cn("h-auto max-h-[960px] w-full object-contain object-left", !left && "lg:object-right")}
+        sizes="(min-width: 1024px) 45vw, 100vw"
+        className={cn(
+          "h-auto max-h-[min(600px,72svh)] w-full object-contain object-left lg:absolute lg:inset-0 lg:h-full lg:max-h-none",
+          !left && "lg:object-right"
+        )}
       />
     );
   }
