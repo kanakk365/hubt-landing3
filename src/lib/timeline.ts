@@ -405,13 +405,6 @@ export const TIMELINE: TimelineChapter[] = [
  * The record: headline figures from the chapters below, each as its source gives it. The patents are the sum of
  * Data Treasury's 2 + 9, ICONIC's 19+ and VEEDIMS's 22.
  */
-/**
- * The chapters on the page for now. The team is approving the full-screen design on Zaah and ICONIC Motors before
- * the rest go up; add the others back here when it is approved.
- */
-const ON_PAGE = new Set(["zaah", "iconic-motors"]);
-export const CHAPTERS = TIMELINE.filter((c) => ON_PAGE.has(c.id));
-
 export const RECORD: TimelineFigure[] = [
   { figure: "100MM+", label: "downloads on the iTunes store, from Zaah's games and apps", chapter: "zaah" },
   { figure: "#1", label: "on the App Store in Canada, Greece and Luxembourg: Graffiti Spray Can", chapter: "zaah" },

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-import { CHAPTERS, RECORD } from "@/lib/timeline";
+import { RECORD, TIMELINE } from "@/lib/timeline";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { scrollToChapter } from "./TimelineChapters";
@@ -23,18 +23,7 @@ export function TimelineRecord() {
     <section id="record" data-nav-tone="dark" aria-label="The record in figures" className="relative pt-16 md:pt-24">
       <div className="container-site">
         <ul className="grid grid-cols-1 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
-          {RECORD.map((r, i) => {
-            // A figure whose chapter is not on the page yet stays a figure, not a link.
-            const at = CHAPTERS.findIndex((c) => c.id === r.chapter);
-            const body = (
-              <>
-                <span className="font-display text-[clamp(2.6rem,1.9rem+2.4vw,4rem)] font-[420] leading-none tracking-[-0.045em] text-fg tabular-nums [font-stretch:108%] transition-colors duration-300 group-hover:text-signal">
-                  {r.figure}
-                </span>
-                <span className="max-w-[30ch] text-[0.9375rem] leading-snug text-fg-muted">{r.label}</span>
-              </>
-            );
-            return (
+          {RECORD.map((r, i) => (
             <motion.li
               key={r.label}
               // Rules between the columns: every cell but the last in its row, two to a row and then three.
@@ -48,23 +37,24 @@ export function TimelineRecord() {
               viewport={view}
               transition={{ duration: 0.7, ease: EXPO, delay: 0.05 + i * 0.06 }}
             >
-              {at < 0 ? (
-                <div className="flex h-full flex-col gap-3 px-1 py-7 sm:px-6 md:py-9">{body}</div>
-              ) : (
               <a
                 href={`#${r.chapter}`}
                 onClick={(ev) => {
                   ev.preventDefault();
-                  scrollToChapter(at, reduce);
+                  scrollToChapter(
+                    TIMELINE.findIndex((c) => c.id === r.chapter),
+                    reduce
+                  );
                 }}
                 className="group flex h-full flex-col gap-3 px-1 py-7 outline-none transition-colors duration-300 hover:bg-white/[0.025] focus-visible:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/60 sm:px-6 md:py-9"
               >
-                {body}
+                <span className="font-display text-[clamp(2.6rem,1.9rem+2.4vw,4rem)] font-[420] leading-none tracking-[-0.045em] text-fg tabular-nums [font-stretch:108%] transition-colors duration-300 group-hover:text-signal">
+                  {r.figure}
+                </span>
+                <span className="max-w-[30ch] text-[0.9375rem] leading-snug text-fg-muted">{r.label}</span>
               </a>
-              )}
             </motion.li>
-            );
-          })}
+          ))}
         </ul>
       </div>
     </section>

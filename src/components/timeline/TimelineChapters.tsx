@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useInView } from "framer-motion";
 import React, { useEffect, useRef, useState } from "react";
-import { CHAPTERS } from "@/lib/timeline";
+import { TIMELINE } from "@/lib/timeline";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { ChapterScene } from "./ChapterScene";
@@ -11,7 +11,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Scroll to chapter `i`. */
 export function scrollToChapter(i: number, reduce: boolean) {
-  document.getElementById(CHAPTERS[i].id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  document.getElementById(TIMELINE[i].id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
 /**
@@ -27,7 +27,7 @@ export function TimelineChapters() {
 
   // The chapter that holds the middle of the screen is the current one.
   useEffect(() => {
-    const chapters = CHAPTERS.map((c) => document.getElementById(c.id)).filter((el): el is HTMLElement => !!el);
+    const chapters = TIMELINE.map((c) => document.getElementById(c.id)).filter((el): el is HTMLElement => !!el);
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) if (entry.isIntersecting) setCurrent(chapters.indexOf(entry.target as HTMLElement));
@@ -63,7 +63,7 @@ export function TimelineChapters() {
       </div>
 
       <ol className="mt-10 md:mt-16">
-        {CHAPTERS.map((c, i) => (
+        {TIMELINE.map((c, i) => (
           <ChapterScene key={c.id} chapter={c} index={i} />
         ))}
       </ol>
@@ -75,7 +75,7 @@ export function TimelineChapters() {
 
 /** The line down the left edge: one mark per company, lit to the current one. Wide screens only. */
 function YearIndex({ current, shown, reduce }: { current: number; shown: boolean; reduce: boolean }) {
-  const last = CHAPTERS.length - 1;
+  const last = TIMELINE.length - 1;
   return (
     <AnimatePresence>
       {shown && (
@@ -97,7 +97,7 @@ function YearIndex({ current, shown, reduce }: { current: number; shown: boolean
               animate={{ scaleY: last ? current / last : 1 }}
               transition={{ duration: reduce ? 0 : 0.7, ease: EASE }}
             />
-            {CHAPTERS.map((c, i) => {
+            {TIMELINE.map((c, i) => {
               const on = i === current;
               const past = i <= current;
               return (
