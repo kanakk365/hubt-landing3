@@ -1,14 +1,16 @@
 /**
  * The /timeline page: the line of companies behind HubTech, from 2002.
  *
- * Every fact here comes from 783hz.me (Keith DeLucia's site) or the client
- * meeting of 27 October 2026; nothing is rounded up or filled in. Where the
- * source gives no years (DestinationKP, today's products) none are shown.
- * PlayerHub is left out on purpose: it is not a HubTech product.
+ * Every fact here comes from 783hz.me (Keith DeLucia's site), the client's
+ * meetings, or the companies' own videos; nothing is rounded up or filled in.
+ * Where the source gives no years (DestinationKP, today's products) none are
+ * shown. PlayerHub is left out on purpose: it is not a HubTech product.
  *
- * The films and stills (13 Nov 2026, from the client's voice note) are the
- * companies' own public record: videos on their YouTube channels, embedded,
- * Elite Gudz's own app screenshots, and a dated capture of ChuChu TV. Each
+ * Each chapter is told full screen: an opening over the company's own footage
+ * or pictures, its figures, then its products as slides. The footage under
+ * loops/ is cut from the companies' own YouTube videos (Elite Gudz, ICONIC
+ * Motors, VEEDIMS) at the client's request, 14 Nov 2026; the stills are their
+ * own screenshots, 783hz.me's images and a dated capture of ChuChu TV. Each
  * file under public/static/timeline carries its origin in a .json sidecar.
  */
 
@@ -17,289 +19,385 @@ export interface TimelineItem {
   line: string;
 }
 
-/** A video on YouTube, embedded on click; its poster is stored locally. */
-export interface TimelineFilm {
-  /** The YouTube video id; the poster is `${FILM}/<id>.webp`. */
-  id: string;
-  title: string;
-  note: string;
-  /** Running time, as YouTube gives it. */
-  seconds: number;
-  /** The channel that published it, when it is the company's own. */
-  channel?: string;
-  /**
-   * A short silent cut (6–10 s, H.264 MP4, no audio track) from the team's original footage, played over the poster
-   * while it is in view, e.g. `${LOOP}/<id>.mp4`. Left out until the original files are in hand: these are not cut
-   * from the YouTube copies.
-   */
-  loop?: string;
-}
-
 export interface TimelineStill {
   src: string;
   width: number;
   height: number;
   alt: string;
-  caption?: string;
 }
 
-/** The chapter's footage: a player with its clips, and optional stills beneath. */
-export interface TimelineMedia {
-  films: TimelineFilm[];
-  /** Phone screenshots, shown at phone proportions. */
-  screens?: TimelineStill[];
-  /** One wide capture, captioned with its date. */
-  proof?: TimelineStill;
-  /** Captioned landscape images from the company's own record. */
-  stills?: TimelineStill[];
+/** A figure shown large, with what it counts. */
+export interface TimelineNumber {
+  figure: string;
+  label: string;
 }
 
 /** A headline figure from the record, linking to the chapter it comes from. */
-export interface TimelineFigure {
-  figure: string;
-  label: string;
+export interface TimelineFigure extends TimelineNumber {
   chapter: string;
+}
+
+/** A picture behind the words. `soft` blurs it, for a picture too small to fill a screen sharply. */
+export interface TimelineBackdrop {
+  src: string;
+  soft?: boolean;
+}
+
+/** A full-screen slide: one product, its picture or footage, and its number. */
+export interface TimelineSlide {
+  name: string;
+  /** What it was, in a few words. */
+  kind: string;
+  line: string;
+  figure?: TimelineNumber;
+  /** Fills the slide behind the words; `video` is a silent cut of the product's own footage that plays over it. */
+  backdrop: TimelineBackdrop & { video?: string };
+  /** Phone screens, side by side. */
+  phones?: TimelineStill[];
+  /** One picture, shown no bigger than it is. */
+  picture?: TimelineStill;
+  /** Products with no picture of their own, named in a row. */
+  cards?: TimelineItem[];
+}
+
+/** A chapter told full screen: an opening over the company's footage or pictures, its figures, then its slides. */
+export interface TimelineScene {
+  /** One plain line saying what the company was. */
+  summary: string;
+  figures: TimelineNumber[];
+  /** Stills behind the opening, one after another; under the montage, the first is its poster. */
+  backdrop?: TimelineBackdrop[];
+  /** One silent cut of the company's own footage, played behind the opening; its first frame sits beside it as .webp. */
+  montage?: string;
+  slides?: TimelineSlide[];
+  /** The rest of the record, one line each. */
+  also?: string[];
 }
 
 export interface TimelineChapter {
   id: string;
   company: string;
-  /** The second, quieter line of the heading. */
-  tagline: string;
   /** Years as the source gives them; absent when it gives none. */
   years?: { from: number; to: number };
-  /** What the rail shows for the chapter: its years, short, or a tag when it has none. */
+  /** What the year index shows for the chapter when it has no years. */
   marker: string;
   place: string;
-  lede: string;
-  items: TimelineItem[];
-  facts?: string[];
-  image?: { src: string; width: number; height: number; alt: string; side: "left" | "right" };
-  media?: TimelineMedia;
+  scene: TimelineScene;
 }
 
 const IMG = "/static/timeline";
-export const FILM = `${IMG}/film`;
-export const LOOP = `${IMG}/loops`;
+const STILL = `${IMG}/stills`;
+const LOOP = `${IMG}/loops`;
+const SHOTS = "/static/landing-page/projects";
+
+/** A slide backdrop cut from the company's own footage: the poster is the cut's first frame. */
+const footage = (name: string) => ({ src: `${LOOP}/${name}.webp`, video: `${LOOP}/${name}.mp4` });
 
 export const TIMELINE: TimelineChapter[] = [
   {
     id: "data-treasury",
     company: "Data Treasury",
-    tagline: "Documents and identity, in the cloud.",
     years: { from: 2002, to: 2016 },
     marker: "02–16",
     place: "Texas, New York, Florida",
-    lede: "A bankrupt company with unfinished technology and two patents, turned around: two remote repositories hosted at SAIC, then the document and biometric products below.",
-    items: [
-      { name: "eImageVault", line: "Documents scanned straight into a remote repository." },
-      { name: "eCheckVault", line: "Check scanners that image a check, extract its data and turn it into an electronic transaction." },
-      { name: "ePharmaVault", line: "A HIPAA-compliant platform for research, medical records and doctor authentication." },
-      {
-        name: "Verify Me",
-        line: "Remote multi-factor biometrics for entry, time and attendance, financial transactions, password replacement and threat detection.",
-      },
-    ],
-    facts: [
-      "Customers included 79 US municipalities, Bank Hapoalim, Signature Bank and Giant Eagle.",
-      "Nine more multi-factor authentication patents granted. Verify Me was sold to LaserLock Technologies, a public company.",
-      "The Congressional Budget Office put a multi-billion-dollar value on its patents.",
-    ],
-    image: {
-      src: `${IMG}/data-treasury.webp`,
-      width: 900,
-      height: 1080,
-      alt: "Collage from the Verify Me years: an iris scan, a fingerprint, a palm on a scanner and a voice waveform",
-      side: "right",
+    scene: {
+      summary: "A bankrupt company with two patents and unfinished technology, turned into document and biometric products in the cloud.",
+      figures: [
+        { figure: "79", label: "US municipalities on its document products" },
+        { figure: "11", label: "patents: two to start, nine more granted" },
+        { figure: "10,000", label: "square feet of raised-floor data center" },
+        { figure: "4", label: "Congressional acts to close it, defeated" },
+      ],
+      backdrop: [{ src: `${STILL}/dt-patent.webp` }, { src: `${IMG}/data-treasury.webp`, soft: true }],
+      slides: [
+        {
+          name: "The vaults",
+          kind: "Document products",
+          line: "Documents, checks and medical records, captured by patented software and stored in remote repositories hosted at SAIC.",
+          figure: { figure: "79", label: "US municipalities, with Bank Hapoalim, Signature Bank and Giant Eagle" },
+          backdrop: { src: `${STILL}/dt-patent.webp` },
+          cards: [
+            { name: "eImageVault", line: "Documents scanned straight into a remote repository." },
+            { name: "eCheckVault", line: "Check scanners that image a check and turn it into an electronic transaction." },
+            { name: "ePharmaVault", line: "A HIPAA-compliant platform for research, medical records and doctor authentication." },
+          ],
+        },
+        {
+          name: "Verify Me",
+          kind: "Remote multi-factor biometrics",
+          line: "For entry, time and attendance, financial transactions, password replacement and threat detection. Sold to LaserLock Technologies, a public company.",
+          figure: { figure: "9", label: "more multi-factor authentication patents granted" },
+          backdrop: { src: `${IMG}/data-treasury.webp`, soft: true },
+          picture: {
+            src: `${IMG}/data-treasury.webp`,
+            width: 900,
+            height: 1080,
+            alt: "Collage from the Verify Me years: an iris scan, a fingerprint, a palm on a scanner and a voice waveform",
+          },
+        },
+        {
+          name: "The patents",
+          kind: "Valued in Washington",
+          line: "The Congressional Budget Office put a multi-billion-dollar value on Data Treasury's patents.",
+          figure: { figure: "Billions", label: "the CBO's value on its patents" },
+          backdrop: { src: `${STILL}/dt-capitol.webp` },
+        },
+      ],
     },
   },
   {
     id: "zaah",
     company: "Zaah",
-    tagline: "From four people to a 180-person studio.",
     years: { from: 2002, to: 2013 },
     marker: "02–13",
     place: "New York, Chennai",
-    lede: "Started with four people in 2002 and grew into a 180-person development shop in New York and Chennai, with web, .NET, mobile and animation teams.",
-    items: [
-      {
-        name: "Photo-industry platform",
-        line: "Front end, middleware and back end for photo products and apparel, for Disney, Walmart, Target, Fuji, Kodak and CVS.",
-      },
-      {
-        name: "Games and apps",
-        line: "100MM+ downloads on the iTunes store: Graffiti Spray Can, #1 globally; Techno Kitten Adventure, #1; GOMI, the first multiplayer build-your-own game with cloud integration on iOS; and several other games and apps.",
-      },
-      { name: "Parkinson's research", line: "The Michael J. Fox Parkinson's research repository, built to streamline research and grants worldwide." },
-      { name: "ChuChu TV", line: "Built by the Chennai office. Today the channel has 98.2 million subscribers on YouTube." },
-    ],
-    media: {
-      films: [
-        { id: "Mn9w3L5Drpc", title: "Graffiti Spray Can", note: "The launch promo, with Gloria Velez", seconds: 22, channel: "Elite Gudz" },
-        { id: "bSaG5wuZQs0", title: "Techno Kitten Adventure", note: "On the floor at E3 2011", seconds: 15 },
+    scene: {
+      summary: "A development studio that grew from four people to 180 in New York and Chennai, and took its games to #1 on the App Store.",
+      figures: [
+        { figure: "100M+", label: "downloads on the App Store" },
+        { figure: "#1", label: "Graffiti Spray Can, globally" },
+        { figure: "98.2M", label: "ChuChu TV subscribers on YouTube" },
+        { figure: "180", label: "people, from four in 2002" },
       ],
-      screens: [
-        { src: `${IMG}/stills/gsc-shake.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: a paint can with arrows telling you to shake the phone" },
-        { src: `${IMG}/stills/gsc-wall.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: an Elite Gudz-branded wall ready to paint" },
-        { src: `${IMG}/stills/gsc-brick.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: a red brick wall with a tag and the background picker" },
-        { src: `${IMG}/stills/gsc-art.webp`, width: 320, height: 480, alt: "Graffiti Spray Can artwork: a gas-mask spray can in yellow smoke" },
-      ],
-      proof: {
-        src: `${IMG}/stills/chuchu-tv-channel.webp`,
-        width: 982,
-        height: 354,
-        alt: "The ChuChu TV Nursery Rhymes & Kids Songs YouTube channel header: 98.2M subscribers, 1.1K videos",
-        caption: "ChuChu TV on YouTube, 13 November 2026: 98.2M subscribers.",
-      },
-      stills: [
+      backdrop: [{ src: `${LOOP}/zaah-montage.webp` }],
+      montage: `${LOOP}/zaah-montage.mp4`,
+      slides: [
         {
-          src: `${IMG}/stills/gsc-charts.webp`,
-          width: 740,
-          height: 355,
-          alt: "App Store top charts for Canada, Greece and Luxembourg, each with Graffiti Spray Can by Elite Gudz at number one",
-          caption: "Graffiti Spray Can at #1 on the App Store in Canada, Greece and Luxembourg.",
+          name: "Graffiti Spray Can",
+          kind: "iPhone app, published by Elite Gudz",
+          line: "Shake the phone, then spray: a can of paint and a wall to tag, in your pocket.",
+          figure: { figure: "#1", label: "on the App Store, globally" },
+          backdrop: footage("zaah-gsc"),
+          phones: [
+            { src: `${STILL}/gsc-shake.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: a paint can with arrows telling you to shake the phone" },
+            { src: `${STILL}/gsc-wall.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: an Elite Gudz-branded wall ready to paint" },
+            { src: `${STILL}/gsc-brick.webp`, width: 320, height: 480, alt: "Graffiti Spray Can on iPhone: a red brick wall with a tag and the background picker" },
+            { src: `${STILL}/gsc-art.webp`, width: 320, height: 480, alt: "Graffiti Spray Can artwork: a gas-mask spray can in yellow smoke" },
+          ],
+          picture: {
+            src: `${STILL}/gsc-charts.webp`,
+            width: 740,
+            height: 355,
+            alt: "App Store top charts for Canada, Greece and Luxembourg, each with Graffiti Spray Can by Elite Gudz at number one",
+          },
         },
         {
-          src: `${IMG}/stills/gomi-title.webp`,
-          width: 725,
-          height: 340,
-          alt: "The GOMI title screen: a monkey over Play and Boards with Friends signs on a tropical island",
-          caption: "GOMI, Get Out of My Island: build your own boards and play them with friends.",
+          name: "Techno Kitten Adventure",
+          kind: "iPhone game",
+          line: "Launched on the floor at E3 2011, and another #1.",
+          figure: { figure: "#1", label: "on the App Store" },
+          backdrop: footage("zaah-tka"),
+        },
+        {
+          name: "Get Out of My Island",
+          kind: "GOMI, an iPhone game",
+          line: "The first multiplayer build-your-own game with cloud integration on iOS: build a board, then play it with friends.",
+          figure: { figure: "1st", label: "multiplayer build-your-own game on iOS" },
+          backdrop: footage("zaah-gomi"),
+          picture: {
+            src: `${STILL}/gomi-title.webp`,
+            width: 725,
+            height: 340,
+            alt: "The GOMI title screen: a monkey over Play and Boards with Friends signs on a tropical island",
+          },
+        },
+        {
+          name: "ChuChu TV",
+          kind: "Built by the Chennai office",
+          line: "Nursery rhymes and kids' songs, started in Zaah's Chennai office.",
+          figure: { figure: "98.2M", label: "subscribers on YouTube, November 2026" },
+          backdrop: { src: `${STILL}/chuchu-tv-channel.webp`, soft: true },
+          picture: {
+            src: `${STILL}/chuchu-tv-channel.webp`,
+            width: 982,
+            height: 354,
+            alt: "The ChuChu TV Nursery Rhymes & Kids Songs YouTube channel header: 98.2M subscribers, 1.1K videos",
+          },
         },
       ],
-    },
-    image: {
-      src: `${IMG}/zaah.webp`,
-      width: 862,
-      height: 1080,
-      alt: "Collage from Zaah's app store years: GOMI, Graffiti Spray Can chart listings and Techno Kitten Adventure",
-      side: "left",
+      also: [
+        "Platforms for photo products and apparel, for Disney, Walmart, Target, Fuji, Kodak and CVS.",
+        "The Michael J. Fox Parkinson's research repository, for research and grants worldwide.",
+      ],
     },
   },
   {
     id: "iconic-motors",
     company: "ICONIC Motors",
-    tagline: "A connected supercar.",
     years: { from: 2009, to: 2014 },
     marker: "09–14",
     place: "New York, Michigan",
-    lede: "An 800 HP, 200+ mph, 2,500-pound supercar on a Formula One chassis and drivetrain, with connected-vehicle technology built in. Under three seconds from 0 to 60.",
-    items: [
-      {
-        name: "AC and Shelby, together again",
-        line: "An agreement with AC Bristol and Carroll Shelby for a limited run of 100 50th-anniversary cars, built in Detroit and New York.",
-      },
-      {
-        name: "Connected-vehicle platform",
-        line: "Patented, running on the OSIsoft real-time database. The cars were tracked live on every major track in the country.",
-      },
-      { name: "Iconic Track Club", line: "A cloud and mobile app that let owners race former Le Mans winners' times on multiple tracks." },
-    ],
-    facts: [
-      "#13 in Robb Report's Car of the Year 2009. Unveiled at Amelia Island, and on the covers of duPont Registry and Robb Report.",
-      "Shown at Jay Leno's shop, the New York Auto Show, Boca d'Elegance and Pebble Beach.",
-      "Titanium, aluminium and carbon-fibre chassis; 19+ patents issued.",
-    ],
-    image: {
-      src: `${IMG}/iconic-motors.webp`,
-      width: 882,
-      height: 1080,
-      alt: "ICONIC Motors collage: the roadster on track, its gauges, and Robb Report and duPont Registry covers",
-      side: "right",
-    },
-    media: {
-      films: [
-        { id: "cdF8m2WRGZ8", title: "The ICONIC AC Roadster", note: "The 2010 film", seconds: 46, channel: "ICONIC Motors" },
-        { id: "zfp3ptQ7KQc", title: "Chassis", note: "Titanium, aluminium and carbon fibre", seconds: 39, channel: "ICONIC Motors" },
-        { id: "ZCzD7tpjSSY", title: "12-point fasteners", note: "The hardware, piece by piece", seconds: 43, channel: "ICONIC Motors" },
-        { id: "jjVUllSs-m4", title: "Track test", note: "In the pits and on the circuit", seconds: 102, channel: "ICONIC Motors" },
-        { id: "UOOkD5N7b0E", title: "Secret track test", note: "The roadster at speed", seconds: 69, channel: "ICONIC Motors" },
+    scene: {
+      summary: "An 800 HP, 2,500-pound supercar on a Formula One chassis and drivetrain, with connected-vehicle technology built in.",
+      figures: [
+        { figure: "800", label: "horsepower" },
+        { figure: "200+", label: "mph top speed" },
+        { figure: "<3 s", label: "from 0 to 60" },
+        { figure: "#13", label: "Robb Report Car of the Year 2009" },
+      ],
+      backdrop: [{ src: `${LOOP}/iconic-montage.webp` }],
+      montage: `${LOOP}/iconic-montage.mp4`,
+      slides: [
+        {
+          name: "The ICONIC AC Roadster",
+          kind: "AC and Shelby, together again",
+          line: "A limited run of 100 50th-anniversary cars with AC Bristol and Carroll Shelby, built in Detroit and New York.",
+          figure: { figure: "100", label: "50th-anniversary cars" },
+          backdrop: footage("iconic-roadster"),
+          picture: {
+            src: `${IMG}/iconic-motors.webp`,
+            width: 882,
+            height: 1080,
+            alt: "ICONIC Motors collage: the roadster on track, its gauges, and Robb Report and duPont Registry covers",
+          },
+        },
+        {
+          name: "Titanium, aluminium, carbon fibre",
+          kind: "The chassis",
+          line: "A Formula One chassis and drivetrain under a 2,500-pound body, built piece by piece.",
+          figure: { figure: "19+", label: "patents issued" },
+          backdrop: footage("iconic-chassis"),
+        },
+        {
+          name: "Track tested",
+          kind: "Palm Beach International Raceway",
+          line: "With the Iconic Track Club app, owners raced former Le Mans winners' times on multiple tracks.",
+          figure: { figure: "200+", label: "mph" },
+          backdrop: footage("iconic-track"),
+        },
+        {
+          name: "A connected car",
+          kind: "Connected-vehicle platform",
+          line: "Patented and running on the OSIsoft real-time database: the cars were tracked live on every major track in the country.",
+          backdrop: footage("iconic-connected"),
+        },
+      ],
+      also: [
+        "Unveiled at Amelia Island, and on the covers of duPont Registry and Robb Report.",
+        "Shown at Jay Leno's shop, the New York Auto Show, Boca d'Elegance and Pebble Beach.",
       ],
     },
   },
   {
     id: "veedims",
     company: "VEEDIMS",
-    tagline: "One wire for power and data.",
     years: { from: 2009, to: 2016 },
     marker: "09–16",
     place: "New York, Florida",
-    lede: "A connected IoT platform with 22 patents: one wire carries power and data to patented sensors, switches and controllers, with AI on top.",
-    items: [
-      { name: "Cloud platform", line: "A front-end dashboard with proprietary algorithms and predictive analytics that make the decisions." },
-      {
-        name: "Installations",
-        line: "Contender Boats, Benetti and Azimut yachts, Seacor work boats, military patrol boats, first-class airline cabins, building management and renewable energy.",
-      },
-      { name: "Remote Dr", line: "Medical devices connected to a waterproof, mil-spec laptop, so doctors could diagnose in real time at sea." },
-    ],
-    facts: [
-      "Its first installation controlled every electric and electronic device in a vehicle.",
-      "Its engineers came from IBM, Qualcomm, General Dynamics, Raytheon, SAIC and Pfizer.",
-      "A micro-licence deal with OSIsoft, whose real-time database usually runs nuclear power plants at six-figure fees per asset.",
-      "Standards listed for the platform: PMA, UL, DO-254, DO-326A and DO-178C, with Zigbee, Z-Wave and Ethernet device integration.",
-    ],
-    image: {
-      src: `${IMG}/veedims.webp`,
-      width: 882,
-      height: 1080,
-      alt: "VEEDIMS collage: the control modules, a live dashboard and a work boat at sea",
-      side: "right",
-    },
-    media: {
-      films: [
-        { id: "hOc5PMTST9k", title: "Seabulk tug New River", note: "Live fuel and engine monitoring", seconds: 22, channel: "VEEDIMS" },
-        { id: "n5q5juNAxkc", title: "At the helm", note: "Trip, speed and fuel, live on board", seconds: 25, channel: "VEEDIMS" },
-        { id: "hvFgm-LPc_w", title: "One platform", note: "Every system on one screen", seconds: 57, channel: "VEEDIMS" },
-        { id: "qndxCH5swwM", title: "In the ICONIC roadster", note: "The modules that run the car", seconds: 55, channel: "ICONIC Motors" },
-        { id: "XEKs36JOyzs", title: "The VEEDIMS story", note: "The company presentation", seconds: 141, channel: "VEEDIMS" },
+    scene: {
+      summary: "A connected IoT platform: one wire carries power and data to patented sensors, switches and controllers, with AI on top.",
+      figures: [
+        { figure: "22", label: "patents" },
+        { figure: "1", label: "wire for power and data" },
+        { figure: "5", label: "standards listed: PMA, UL, DO-254, DO-326A, DO-178C" },
+        { figure: "6", label: "companies its engineers came from, IBM to Pfizer" },
+      ],
+      backdrop: [{ src: `${LOOP}/veedims-montage.webp` }],
+      montage: `${LOOP}/veedims-montage.mp4`,
+      slides: [
+        {
+          name: "At sea",
+          kind: "Seabulk tug New River, and more",
+          line: "Contender Boats, Benetti and Azimut yachts, Seacor work boats and military patrol boats, monitored live.",
+          backdrop: footage("veedims-sea"),
+        },
+        {
+          name: "At the helm",
+          kind: "Trip, speed and fuel, live",
+          line: "Every system on board on one screen, and on the owner's phone.",
+          backdrop: footage("veedims-helm"),
+        },
+        {
+          name: "One platform",
+          kind: "Cloud dashboard and AI",
+          line: "Proprietary algorithms and predictive analytics that make the decisions, for boats, airline cabins, buildings and renewable energy.",
+          figure: { figure: "22", label: "patents" },
+          backdrop: footage("veedims-platform"),
+        },
+        {
+          name: "One wire",
+          kind: "Sensors, switches and controllers",
+          line: "Power and data on a single wire to patented modules. Its first installation controlled every electric and electronic device in a vehicle.",
+          figure: { figure: "1", label: "wire" },
+          backdrop: footage("veedims-wire"),
+        },
+      ],
+      also: [
+        "Remote Dr: medical devices on a waterproof, mil-spec laptop, so doctors could diagnose in real time at sea.",
+        "A micro-licence deal with OSIsoft, whose real-time database usually runs nuclear power plants at six-figure fees per asset.",
       ],
     },
   },
   {
     id: "hub-technology",
     company: "Hub Technology",
-    tagline: "Youth sports, streamed, scouted and played.",
     years: { from: 2017, to: 2022 },
     marker: "17–22",
     place: "New York, Florida",
-    lede: "Products for the youth sports market and FC Barcelona's academies worldwide.",
-    items: [
-      { name: "YSN", line: "Live streams of youth games from mobile and fixed cameras, with live team chat, player profiles and game analytics." },
-      { name: "College Reels", line: "Recruiting: players post video, documents, grades and statistics; coaches search, follow, message and share." },
-      {
-        name: "Connected Athlete",
-        line: "One HIPAA-compliant place for wearable sensor data, video and medical records, shared with doctors, therapists, trainers and coaches.",
-      },
-      { name: "Battle's Lounge", line: "Online, mobile and in-person esports leagues and tournaments, for venues, influencers, athletes and game developers." },
-    ],
-    facts: [
-      "Alongside, 2017–2020: Barça Academy NY, FC Barcelona's first joint-venture youth academy in America, with a player platform for fees, communication, events and statistics.",
-    ],
-    image: {
-      src: `${IMG}/hub-technology.webp`,
-      width: 920,
-      height: 1080,
-      alt: "Hub Technology's own screens: a YSN live stream, Battle's Lounge tournaments and the Connected Athlete dashboard",
-      side: "right",
+    scene: {
+      summary: "Products for the youth sports market and FC Barcelona's academies worldwide: streamed, scouted and played.",
+      figures: [
+        { figure: "4", label: "products, from live streams to esports" },
+        { figure: "1st", label: "FC Barcelona joint-venture academy in America" },
+        { figure: "4,000+", label: "players at Barça Academy NY's first tryouts" },
+      ],
+      backdrop: [{ src: `${STILL}/hub-barca.webp` }, { src: `${SHOTS}/ysn-streaming-crop.jpg`, soft: true }],
+      slides: [
+        {
+          name: "YSN",
+          kind: "Youth sports, streamed",
+          line: "Live streams of youth games from mobile and fixed cameras, with live team chat, player profiles and game analytics.",
+          backdrop: { src: `${SHOTS}/ysn-streaming-crop.jpg`, soft: true },
+          picture: { src: `${SHOTS}/ysn-live-interface.jpeg`, width: 650, height: 600, alt: "YSN's live interface: a youth game streaming with the team chat beside it" },
+        },
+        {
+          name: "College Reels",
+          kind: "Recruiting",
+          line: "Players post video, documents, grades and statistics; coaches search, follow, message and share.",
+          backdrop: { src: `${SHOTS}/ysn-team-dashboard.jpeg`, soft: true },
+          picture: { src: `${SHOTS}/ysn-team-dashboard.jpeg`, width: 650, height: 600, alt: "A team dashboard with recent matches and the roster" },
+        },
+        {
+          name: "Connected Athlete",
+          kind: "Wearables, video and medical records",
+          line: "One HIPAA-compliant place for sensor data, video and medical records, shared with doctors, therapists, trainers and coaches.",
+          backdrop: { src: `${SHOTS}/connected-athlete-dashboard.png`, soft: true },
+          picture: { src: `${SHOTS}/connected-athlete-dashboard.png`, width: 767, height: 580, alt: "The Connected Athlete dashboard: steps, calories, active energy, stand minutes, sleep and resting heart rate" },
+        },
+        {
+          name: "Battle's Lounge",
+          kind: "Esports leagues and tournaments",
+          line: "Online, mobile and in-person leagues for venues, influencers, athletes and game developers.",
+          backdrop: { src: `${SHOTS}/battle-lounge-2.jpg`, soft: true },
+          picture: { src: `${SHOTS}/battle-lounge-2.jpg`, width: 650, height: 600, alt: "Battle's Lounge: an Apex weekly qualifier open for registration" },
+        },
+        {
+          name: "Barça Academy NY",
+          kind: "2017 to 2020, alongside",
+          line: "FC Barcelona's first joint-venture youth academy in America, with a player platform for fees, communication, events and statistics. Within a year, several teams ranked in the national top 25.",
+          figure: { figure: "4,000+", label: "boys and girls at the first tryouts" },
+          backdrop: { src: `${STILL}/hub-barca.webp` },
+        },
+      ],
     },
   },
   {
     id: "destination-kp",
     company: "DestinationKP",
-    tagline: "Youth sports and sports medicine, on one site.",
     marker: "KP",
     place: "Kings Park, New York",
-    lede: "Designated by New York as the state's only youth sports and medical tourism destination: a former sand mine in Kings Park, planned as a youth sports complex and medical facility.",
-    items: [
-      { name: "42 acres", line: "The site." },
-      { name: "170,000 sq ft", line: "Medical and commercial space." },
-      { name: "10 turf fields", line: "Outdoor, with 4K live streaming." },
-      { name: "Connected athletes", line: "Biomechanical analysis and connected-athlete sensors." },
-    ],
-    facts: [
-      "Variances, site approval, building permits and financing approvals, won with the community, the town and the state.",
-    ],
+    scene: {
+      summary: "New York's only designated youth sports and medical tourism destination: a former sand mine, planned as a sports complex and medical facility.",
+      figures: [
+        { figure: "42", label: "acres" },
+        { figure: "170,000", label: "square feet of medical and commercial space" },
+        { figure: "10", label: "outdoor turf fields, with 4K live streaming" },
+      ],
+      also: [
+        "Biomechanical analysis and connected-athlete sensors on site.",
+        "Variances, site approval, building permits and financing approvals, won with the community, the town and the state.",
+      ],
+    },
   },
 ];
 
@@ -307,6 +405,13 @@ export const TIMELINE: TimelineChapter[] = [
  * The record: headline figures from the chapters below, each as its source gives it. The patents are the sum of
  * Data Treasury's 2 + 9, ICONIC's 19+ and VEEDIMS's 22.
  */
+/**
+ * The chapters on the page for now. The team is approving the full-screen design on Zaah and ICONIC Motors before
+ * the rest go up; add the others back here when it is approved.
+ */
+const ON_PAGE = new Set(["zaah", "iconic-motors"]);
+export const CHAPTERS = TIMELINE.filter((c) => ON_PAGE.has(c.id));
+
 export const RECORD: TimelineFigure[] = [
   { figure: "100MM+", label: "downloads on the iTunes store, from Zaah's games and apps", chapter: "zaah" },
   { figure: "#1", label: "on the App Store in Canada, Greece and Luxembourg: Graffiti Spray Can", chapter: "zaah" },
@@ -315,7 +420,3 @@ export const RECORD: TimelineFigure[] = [
   { figure: "79", label: "US municipalities on Data Treasury's document products", chapter: "data-treasury" },
   { figure: "#13", label: "Robb Report Car of the Year 2009: the ICONIC AC Roadster", chapter: "iconic-motors" },
 ];
-
-/** The era chart: chapters with years, in order. */
-export const ERAS = TIMELINE.filter((c) => c.years).map((c) => ({ id: c.id, company: c.company, ...c.years! }));
-export const FIRST_YEAR = 2002;

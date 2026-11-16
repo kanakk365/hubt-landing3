@@ -1,47 +1,52 @@
 "use client";
 
-import { motion, useInView, useScroll, useSpring, useTransform } from "framer-motion";
-import Image from "next/image";
-import React, { useRef } from "react";
-import { TIMELINE, type TimelineChapter } from "@/lib/timeline";
+import { AnimatePresence, motion, useInView } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { CHAPTERS } from "@/lib/timeline";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { cn } from "@/lib/utils";
-import { ChapterFootage } from "./ChapterFootage";
+import { ChapterScene } from "./ChapterScene";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-/** Sides slide in a touch before they are fully on screen, however tall the chapter. */
-const VIEW = { once: true, margin: "0px 0px -12% 0px" } as const;
 
 /** Scroll to chapter `i`. */
 export function scrollToChapter(i: number, reduce: boolean) {
-  document.getElementById(TIMELINE[i].id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  document.getElementById(CHAPTERS[i].id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
 /**
- * The companies down one line, as on the History page: the line draws itself
- * as you scroll, with a light at its head, and each chapter comes in from
- * either side as it reaches the middle of the screen, its text from one side
- * and its collage from the other. The year on the line lights while its
- * chapter holds the middle, and the line ends at Now. On phones and tablets the line runs
- * down the left edge; with reduced motion it is drawn and everything is in place.
+ * The companies behind HubTech, each told full screen, one after another. While they are on screen, a year index
+ * runs down the left edge: a mark for each company, the line filled down to the one you are in, and each mark jumps
+ * to its chapter.
  */
 export function TimelineChapters() {
   const reduce = !!useReducedMotion();
-  const axis = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: axis, offset: ["start 55%", "end 55%"] });
-  const drawn = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4, restDelta: 0.0001 });
-  const head = useTransform(drawn, (v) => `${(v * 100).toFixed(3)}%`);
-  const view = { once: true, amount: 0.6 } as const;
+  const section = useRef<HTMLElement>(null);
+  const inside = useInView(section, { margin: "-48% 0px -48% 0px" });
+  const [current, setCurrent] = useState(0);
+
+  // The chapter that holds the middle of the screen is the current one.
+  useEffect(() => {
+    const chapters = CHAPTERS.map((c) => document.getElementById(c.id)).filter((el): el is HTMLElement => !!el);
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) setCurrent(chapters.indexOf(entry.target as HTMLElement));
+      },
+      { rootMargin: "-50% 0px -50% 0px" }
+    );
+    chapters.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 
   return (
-    <section id="chapters" data-nav-tone="dark" aria-labelledby="chapters-title" className="relative pt-16 md:pt-24">
-      <div className="container-site">
+    <section ref={section} id="chapters" data-nav-tone="dark" aria-labelledby="chapters-title" className="relative pt-24 md:pt-36">
+      <div className="container-site text-center">
         <motion.h2
           id="chapters-title"
           initial={reduce ? false : "hidden"}
           whileInView="shown"
-          viewport={view}
-          className="font-display text-balance text-[clamp(2rem,1.15rem+2.3vw,3.3rem)] font-[460] leading-[1.04] tracking-[-0.036em] text-fg [font-stretch:104%] lg:text-center"
+          viewport={{ once: true, amount: 0.6 }}
+          className="font-display text-balance text-[clamp(2rem,1.15rem+2.3vw,3.3rem)] font-[460] leading-[1.04] tracking-[-0.036em] text-fg [font-stretch:104%]"
         >
           {["The companies behind HubTech.", "What each one built."].map((line, i) => (
             <span key={line} className="block overflow-hidden pb-[0.06em]">
@@ -55,222 +60,81 @@ export function TimelineChapters() {
             </span>
           ))}
         </motion.h2>
-
-        <div ref={axis} className="relative mt-12 md:mt-20">
-          {/* The line: its track, the part drawn so far, and the light at its head */}
-          <span aria-hidden className="absolute bottom-0 left-[19px] top-0 w-px -translate-x-1/2 bg-line lg:left-1/2" />
-          <motion.span
-            aria-hidden
-            className="absolute bottom-0 left-[19px] top-0 w-[2px] origin-top -translate-x-1/2 bg-gradient-to-b from-signal/40 via-signal to-signal shadow-[0_0_14px_oklch(0.82_0.17_152/0.5)] lg:left-1/2"
-            style={reduce ? { scaleY: 1 } : { scaleY: drawn }}
-          />
-          {!reduce && (
-            <motion.span
-              aria-hidden
-              className="absolute left-[19px] z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[oklch(0.96_0.06_152)] shadow-[0_0_14px_4px_oklch(0.82_0.17_152/0.65)] lg:left-1/2"
-              style={{ top: head }}
-            />
-          )}
-          <ol className="relative">
-            {TIMELINE.map((c, i) => (
-              <Chapter key={c.id} chapter={c} index={i} reduce={reduce} />
-            ))}
-          </ol>
-        </div>
-
-        {/* The line ends at Now, which carries on into the next section. */}
-        <div className="relative flex pb-4 pt-2 lg:justify-center">
-          <a
-            href="#now"
-            className="group relative z-10 -ml-[7px] flex items-center gap-2 rounded-full border border-signal bg-black px-3 py-1 text-[0.8125rem] font-medium text-fg shadow-[0_0_0_6px_black] outline-none transition-colors hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 lg:ml-0"
-          >
-            <span aria-hidden className="relative flex size-2">
-              <span className="absolute inset-0 animate-ping rounded-full bg-signal/60 motion-reduce:hidden" />
-              <span className="relative size-2 rounded-full bg-signal" />
-            </span>
-            Now
-          </a>
-        </div>
       </div>
+
+      <ol className="mt-10 md:mt-16">
+        {CHAPTERS.map((c, i) => (
+          <ChapterScene key={c.id} chapter={c} index={i} />
+        ))}
+      </ol>
+
+      <YearIndex current={current} shown={inside} reduce={reduce} />
     </section>
   );
 }
 
-function Chapter({ chapter, index, reduce }: { chapter: TimelineChapter; index: number; reduce: boolean }) {
-  const year = useRef<HTMLSpanElement>(null);
-  // The line is drawn to 55% of the screen, so the year lights the moment the line reaches it, and dims again if
-  // you scroll back above it.
-  const lit = useInView(year, { margin: "0px 0px -45% 0px" });
-  const left = index % 2 === 0;
-  const label = chapter.years ? String(chapter.years.from) : chapter.marker;
-
+/** The line down the left edge: one mark per company, lit to the current one. Wide screens only. */
+function YearIndex({ current, shown, reduce }: { current: number; shown: boolean; reduce: boolean }) {
+  const last = CHAPTERS.length - 1;
   return (
-    // Above the line's travelling light, so the light passes under the year and behind the footage.
-    <li id={chapter.id} className="relative isolate z-30 scroll-mt-[96px] py-14 lg:py-20">
-      <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-28">
-        {/* The year on the line */}
-        <span
-          ref={year}
-          aria-hidden
-          className={cn(
-            "absolute left-[19px] top-0 z-10 -translate-x-1/2 rounded-full border bg-black px-2.5 py-1 text-[0.75rem] font-medium tabular-nums transition-[color,border-color,box-shadow] duration-700 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2",
-            lit
-              ? "border-signal text-fg shadow-[0_0_22px_oklch(0.82_0.17_152/0.45),0_0_0_6px_black]"
-              : "border-line-strong text-fg-subtle shadow-[0_0_0_6px_black]"
-          )}
+    <AnimatePresence>
+      {shown && (
+        <motion.nav
+          aria-label="Companies"
+          className="fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 lg:block xl:left-7"
+          initial={reduce ? false : { opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -12 }}
+          transition={{ duration: 0.5, ease: EASE }}
         >
-          {label}
-        </span>
-
-        {/* A faint green light on the collage's side while the chapter is lit */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-[120%] -translate-x-1/2 transition-opacity duration-1000"
-          style={{
-            opacity: lit ? 1 : 0,
-            background: `radial-gradient(38% 50% at ${left ? "72%" : "28%"} 50%, oklch(0.82 0.17 152 / 0.07), transparent 70%)`,
-          }}
-        />
-
-        <motion.div
-          initial={reduce ? false : { opacity: 0, x: left ? -40 : 40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={VIEW}
-          transition={{ duration: 0.9, ease: EASE }}
-          className={cn("min-w-0 pl-12 lg:pl-0", left ? "lg:text-right" : "lg:order-2")}
-        >
-          <ChapterBody chapter={chapter} end={left} />
-        </motion.div>
-
-        <motion.div
-          initial={reduce ? false : { opacity: 0, x: left ? 60 : -60, scale: 0.97 }}
-          whileInView={{ opacity: 1, x: 0, scale: 1 }}
-          viewport={VIEW}
-          transition={{ duration: 1, ease: EASE, delay: 0.1 }}
-          className={cn(
-            "flex min-w-0 pl-12 lg:pl-0",
-            !left && "lg:order-1 lg:justify-end",
-            // Stacked, a collage runs to the screen's right edge; side by side, it fills the height of the chapter's text.
-            chapter.image && "-mr-6 md:-mr-8 lg:relative lg:mr-0 lg:self-stretch"
-          )}
-        >
-          <Plate chapter={chapter} left={left} />
-        </motion.div>
-      </div>
-
-      {/* The company's own footage, across both sides of the line */}
-      {chapter.media && (
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={VIEW}
-          transition={{ duration: 0.9, ease: EASE }}
-          className="mt-12 pl-12 lg:mt-16 lg:pl-0"
-        >
-          <ChapterFootage media={chapter.media} />
-        </motion.div>
+          <ol className="relative flex flex-col gap-6">
+            <span aria-hidden className="absolute bottom-[7px] left-[5px] top-[7px] w-px bg-white/15" />
+            <motion.span
+              aria-hidden
+              className="absolute left-[5px] top-[7px] w-px origin-top bg-signal shadow-[0_0_10px_oklch(0.82_0.17_152/0.6)]"
+              style={{ height: `calc(100% - 14px)` }}
+              initial={false}
+              animate={{ scaleY: last ? current / last : 1 }}
+              transition={{ duration: reduce ? 0 : 0.7, ease: EASE }}
+            />
+            {CHAPTERS.map((c, i) => {
+              const on = i === current;
+              const past = i <= current;
+              return (
+                <li key={c.id} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => scrollToChapter(i, reduce)}
+                    aria-label={c.company}
+                    aria-current={on ? "true" : undefined}
+                    className="group flex cursor-pointer items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "relative size-[11px] rounded-full border bg-black transition-[border-color,background-color,box-shadow] duration-500",
+                        on
+                          ? "border-signal bg-signal shadow-[0_0_14px_3px_oklch(0.82_0.17_152/0.55)]"
+                          : past
+                            ? "border-signal"
+                            : "border-white/30 group-hover:border-white/70"
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-[0.6875rem] font-medium tabular-nums tracking-[0.02em] transition-colors duration-500",
+                        on ? "text-white" : "text-white/45 group-hover:text-white/80"
+                      )}
+                    >
+                      {c.marker}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </motion.nav>
       )}
-    </li>
-  );
-}
-
-/** The chapter's words. `end` sets them against the line on the left-hand side. */
-function ChapterBody({ chapter, end }: { chapter: TimelineChapter; end: boolean }) {
-  // DestinationKP's figures sit on its plate, so its copy carries only the lede and the approvals.
-  const listed = !!chapter.image;
-  return (
-    <div className="@container">
-      <h3 className="font-display text-[clamp(2.2rem,1.4rem+2.4vw,3.6rem)] font-[420] leading-[0.98] tracking-[-0.04em] text-fg [font-stretch:108%]">
-        {chapter.company}
-      </h3>
-      {/* Sized to the column, so the longest tagline still holds on one line. */}
-      <p className="font-display mt-2 text-balance text-[clamp(1.05rem,4.8cqi,1.5rem)] font-[440] leading-[1.15] tracking-[-0.025em] text-fg-subtle">
-        {chapter.tagline}
-      </p>
-      <p className="mt-4 text-[0.8125rem] tabular-nums text-fg-muted">
-        {chapter.years ? `${chapter.years.from}–${chapter.years.to} · ${chapter.place}` : chapter.place}
-      </p>
-      <p className={cn("mt-5 max-w-[48ch] text-[1.0625rem] leading-relaxed text-fg-muted", end && "lg:ml-auto")}>{chapter.lede}</p>
-      {listed && (
-        <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
-          {chapter.items.map((item) => (
-            <div key={item.name} className="border-t border-line pt-3">
-              <dt className="text-[0.9375rem] font-medium tracking-[-0.01em] text-fg">{item.name}</dt>
-              <dd className="mt-1 text-[0.875rem] leading-snug text-fg-muted">{item.line}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {chapter.facts && (
-        <div className="mt-5 flex flex-col gap-1.5 text-[0.8125rem] leading-snug text-fg-subtle">
-          {chapter.facts.map((f) => (
-            <p key={f} className={cn("max-w-[62ch]", end && "lg:ml-auto")}>
-              {f}
-            </p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * The chapter's picture: its collage, cut along its own torn edge, or for DestinationKP the site in four figures.
- * Side by side with the text, a collage is as tall as the text (or as wide as its column, if that comes first) and
- * sits against the line (`left` means it is on the right of it). Stacked, it takes the full width.
- */
-function Plate({ chapter, left }: { chapter: TimelineChapter; left: boolean }) {
-  if (chapter.image) {
-    const { image } = chapter;
-    return (
-      <Image
-        src={image.src}
-        width={image.width}
-        height={image.height}
-        alt={image.alt}
-        sizes="(min-width: 1024px) 45vw, 100vw"
-        className={cn(
-          "h-auto max-h-[min(600px,72svh)] w-full object-contain object-left lg:absolute lg:inset-0 lg:h-full lg:max-h-none",
-          !left && "lg:object-right"
-        )}
-      />
-    );
-  }
-  return (
-    <div className="@container relative flex w-full max-w-[34rem] flex-col overflow-hidden rounded-[28px] border border-line bg-[oklch(0.07_0_0)]">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, oklch(1 0 0 / 0.07) 1px, transparent 1px), linear-gradient(to bottom, oklch(1 0 0 / 0.07) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-          backgroundPosition: "center",
-        }}
-      />
-      {/* Each figure is sized to its cell (cqi less the padding), so the longest, "Connected athletes", never breaks. */}
-      <dl className="relative grid grid-cols-1 @[22rem]:grid-cols-2">
-        {chapter.items.map((item, i) => (
-          <div
-            key={item.name}
-            className={cn(
-              "flex flex-col gap-1.5 border-line p-6",
-              i < 3 && "border-b",
-              i === 2 && "@[22rem]:border-b-0",
-              i % 2 === 0 && "@[22rem]:border-r"
-            )}
-          >
-            <dt className="whitespace-nowrap font-display text-[clamp(1.25rem,calc(11.3cqi-5.6px),1.9rem)] font-[440] leading-[1.05] tracking-[-0.03em] text-fg @[22rem]:text-[clamp(1rem,calc(5.6cqi-5.6px),1.9rem)]">
-              {item.name}
-            </dt>
-            <dd className="text-[0.875rem] leading-snug text-fg-muted">{item.line}</dd>
-          </div>
-        ))}
-      </dl>
-      <div className="relative flex items-center gap-2 border-t border-line px-6 py-4 text-[0.8125rem] text-fg-muted">
-        <span aria-hidden className="size-1.5 rounded-full bg-signal" />
-        {chapter.place}
-      </div>
-    </div>
+    </AnimatePresence>
   );
 }
