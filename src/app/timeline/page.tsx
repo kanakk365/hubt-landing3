@@ -8,7 +8,7 @@ import { TimelineRecord } from "@/components/timeline/TimelineRecord";
 export const metadata: Metadata = {
   title: "Timeline",
   description:
-    "The companies behind HubTech since 2002: Data Treasury, Zaah, ICONIC Motors, VEEDIMS and Hub Technology, through to the platforms we build and run today.",
+    "The companies behind HubTech since 2002: Data Treasury, Elite Gudz and 21st Street Games, ICONIC Motors, VEEDIMS and Hub Technology, through to the platforms we build and run today.",
 };
 
 /**

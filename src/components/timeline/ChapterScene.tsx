@@ -1,37 +1,26 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  useInView,
-  useMotionValue,
-  useMotionValueEvent,
-  useScroll,
-  useSpring,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { animate, motion, useInView, useScroll, useSpring, useTransform } from "framer-motion";
 import Image from "next/image";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { TimelineChapter, TimelineNumber, TimelineSlide } from "@/lib/timeline";
+import React, { useEffect, useRef, useState } from "react";
+import type { TimelineChapter, TimelineNumber } from "@/lib/timeline";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { cn } from "@/lib/utils";
+import { ChapterStory } from "./ChapterStory";
+import { Footage } from "./Footage";
 
 const EXPO = [0.16, 1, 0.3, 1] as const;
 /** How long a still behind an opening holds before the next. */
 const BACKDROP_MS = 7000;
-/** The share of each slide's screen of scroll it holds still before the strip moves on. */
-const HOLD = 0.4;
 /** Every scene's words sit in the page's container with the same inset on both sides, clear of the year index. */
 const FRAME = "container-site lg:px-16";
 
 /**
  * A company told full screen. Its opening grows from a framed picture to the whole screen as it arrives, with the
  * company's own footage (or its pictures) behind; the name rises letter by letter, the line on what it was follows
- * word by word and the figures count up. Then its products, one screen each, on a strip that the page's scroll carries
- * sideways, each slide's backdrop, words and picture moving at their own pace so the strip has depth. Everything is
- * centred and symmetrical. With reduced motion, nothing moves or plays and the slides stack.
+ * word by word and the figures count up. Then its products, as two boxes with the timeline's line between them: the
+ * company's overview, which stays, and a picture box that changes as the page scrolls (see ChapterStory). A company
+ * with no products ends on the rest of its record. With reduced motion, nothing moves or plays.
  */
 export function ChapterScene({ chapter, index }: { chapter: TimelineChapter; index: number }) {
   const reduce = !!useReducedMotion();
@@ -40,8 +29,7 @@ export function ChapterScene({ chapter, index }: { chapter: TimelineChapter; ind
   return (
     <li id={chapter.id} aria-label={chapter.company} className="relative isolate bg-black">
       <Opening chapter={chapter} index={index} reduce={reduce} />
-      {scene.slides && <Slides slides={scene.slides} reduce={reduce} />}
-      {scene.also && <Also lines={scene.also} reduce={reduce} />}
+      {scene.slides ? <ChapterStory chapter={chapter} reduce={reduce} /> : scene.also && <Also lines={scene.also} reduce={reduce} />}
     </li>
   );
 }
@@ -128,7 +116,13 @@ function Opening({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
         <Rise
           text={chapter.company}
           reduce={reduce}
-          className="mt-5 font-display text-[clamp(3.4rem,1.2rem+9.5vw,11.5rem)] font-[480] leading-[0.86] tracking-[-0.055em] text-white [font-stretch:108%] md:mt-6"
+          className={cn(
+            "mx-auto mt-5 text-balance font-display font-[480] leading-[0.86] tracking-[-0.055em] text-white [font-stretch:108%] md:mt-6",
+            // A long name (two companies credited together) is set smaller, so it holds to two lines.
+            chapter.company.length > 16
+              ? "max-w-[16ch] text-[clamp(2.6rem,1rem+5.6vw,7rem)]"
+              : "text-[clamp(3.4rem,1.2rem+9.5vw,11.5rem)]"
+          )}
         />
 
         <Words
@@ -309,302 +303,6 @@ function Field() {
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
-/* Slides                                                                                                               */
-/* ------------------------------------------------------------------------------------------------------------------ */
-
-/** Where the strip stands at each point of the scroll, in slides: still on each for a while, moving between them. */
-function stops(count: number) {
-  const n = Math.max(1, count - 1);
-  const half = HOLD / n / 2;
-  const input: number[] = [];
-  const output: number[] = [];
-  for (let i = 0; i < count; i++) {
-    const at = i / n;
-    input.push(Math.max(0, at - half), Math.min(1, at + half));
-    output.push(i, i);
-  }
-  return { input, output };
-}
-
-/**
- * The products, one full screen each, side by side. The strip pins to the screen and the page's scroll carries it
- * sideways, one slide per screen of scroll, holding on each before the next comes in. The controls show where you
- * are and jump to a slide; a slide's footage plays while it is the one in front.
- */
-function Slides({ slides, reduce }: { slides: TimelineSlide[]; reduce: boolean }) {
-  const count = slides.length;
-  const track = useRef<HTMLDivElement>(null);
-  const inView = useInView(track);
-  const { scrollYProgress } = useScroll({ target: track, offset: ["start start", "end end"] });
-  const eased = useSpring(scrollYProgress, { stiffness: 200, damping: 38, mass: 0.35, restDelta: 0.0001 });
-  const { input, output } = useMemo(() => stops(count), [count]);
-  const pos = useTransform(eased, input, output);
-  const x = useTransform(pos, (p) => `${(-p * 100) / count}%`);
-  const [at, setAt] = useState(0);
-
-  useMotionValueEvent(pos, "change", (p) => {
-    const i = Math.min(count - 1, Math.max(0, Math.round(p)));
-    setAt((prev) => (prev === i ? prev : i));
-  });
-
-  /** Scroll the page to the point where slide `i` holds. */
-  const go = (i: number) => {
-    const el = track.current;
-    if (!el) return;
-    const n = Math.min(count - 1, Math.max(0, i));
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const run = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + (run * n) / Math.max(1, count - 1), behavior: "smooth" });
-  };
-
-  if (reduce) {
-    return (
-      <div role="region" aria-label="Products">
-        {slides.map((slide, i) => (
-          <div key={slide.name} className="relative h-[100svh] overflow-hidden">
-            <Slide slide={slide} index={i} count={count} on live={false} />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={track}
-      role="region"
-      aria-roledescription="carousel"
-      aria-label="Products"
-      className="relative"
-      style={{ height: `${count * 100}svh` }}
-    >
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <motion.div className="flex h-full" style={{ width: `${count * 100}%`, x }}>
-          {slides.map((slide, i) => (
-            <div key={slide.name} className="relative h-full shrink-0 overflow-hidden" style={{ width: `${100 / count}%` }}>
-              <Slide slide={slide} index={i} count={count} pos={pos} on={i === at} live={i === at && inView} />
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Where you are on the strip, centred between the two arrows */}
-        <div className="absolute inset-x-0 bottom-0 z-10">
-          <div className={cn(FRAME, "pb-6 md:pb-8")}>
-            <div className="flex items-center gap-4 md:gap-6">
-              <SlideButton label="Previous" onClick={() => go(at - 1)} disabled={at === 0}>
-                <ChevronLeft className="size-4" />
-              </SlideButton>
-              <div className="min-w-0 flex-1">
-                <span className="relative block h-[2px] overflow-hidden rounded-full bg-white/20">
-                  <motion.span className="absolute inset-0 origin-left bg-signal" style={{ scaleX: eased }} />
-                </span>
-                <ol className="mt-3 hidden gap-3 sm:grid" style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
-                  {slides.map((slide, i) => {
-                    const on = i === at;
-                    return (
-                      <li key={slide.name} className="min-w-0 text-center">
-                        <button
-                          type="button"
-                          onClick={() => go(i)}
-                          aria-current={on ? "true" : undefined}
-                          className={cn(
-                            "inline-block max-w-full cursor-pointer truncate rounded-sm text-[0.8125rem] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-signal/60",
-                            on ? "text-white" : "text-white/50 hover:text-white/85"
-                          )}
-                        >
-                          <span className="mr-1.5 tabular-nums text-white/40">{String(i + 1).padStart(2, "0")}</span>
-                          {slide.name}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-                <p className="mt-3 truncate text-center text-[0.8125rem] tabular-nums text-white/75 sm:hidden">
-                  {String(at + 1).padStart(2, "0")} / {String(count).padStart(2, "0")} · {slides[at].name}
-                </p>
-              </div>
-              <SlideButton label="Next" onClick={() => go(at + 1)} disabled={at === count - 1}>
-                <ChevronRight className="size-4" />
-              </SlideButton>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SlideButton({
-  label,
-  onClick,
-  disabled,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm outline-none transition-[color,border-color,opacity] duration-300 hover:border-signal hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 disabled:cursor-default disabled:opacity-30 disabled:hover:border-white/20 disabled:hover:text-white md:size-11"
-    >
-      {children}
-    </button>
-  );
-}
-
-/**
- * One product, full screen. On the strip, its layers move at their own pace: the backdrop drifts slower than the
- * strip and eases out of a zoom, the words and the picture travel a little further and fade, so a slide arriving
- * settles into place rather than sliding in flat.
- */
-function Slide({
-  slide,
-  index,
-  count,
-  pos,
-  on,
-  live,
-}: {
-  slide: TimelineSlide;
-  index: number;
-  count: number;
-  pos?: MotionValue<number>;
-  on: boolean;
-  live: boolean;
-}) {
-  const still = useMotionValue(index);
-  const o = useTransform(pos ?? still, (p) => index - p);
-  const bgX = useTransform(o, (v) => `${-v * 16}%`);
-  const bgScale = useTransform(o, (v) => 1 + Math.min(1, Math.abs(v)) * 0.32);
-  const wordsX = useTransform(o, (v) => `${v * 26}%`);
-  const wordsOpacity = useTransform(o, (v) => 1 - Math.min(1, Math.abs(v) * 1.6));
-  const visualX = useTransform(o, (v) => `${v * 48}%`);
-  const visualOpacity = useTransform(o, (v) => 1 - Math.min(1, Math.abs(v) * 1.3));
-  const visualScale = useTransform(o, (v) => 1 - Math.min(1, Math.abs(v)) * 0.1);
-  const moving = !!pos;
-
-  const visual = slide.phones || slide.picture || slide.cards;
-  const tall = !!slide.picture && slide.picture.height > slide.picture.width;
-
-  return (
-    <div
-      role="group"
-      aria-roledescription="slide"
-      aria-label={`${index + 1} of ${count}: ${slide.name}`}
-      aria-hidden={!on}
-      inert={!on}
-      className="relative isolate size-full"
-    >
-      <motion.div aria-hidden className="absolute inset-0 -z-10" style={moving ? { x: bgX, scale: bgScale } : undefined}>
-        <Image
-          src={slide.backdrop.src}
-          alt=""
-          fill
-          sizes="100vw"
-          className={cn("object-cover", slide.backdrop.soft && "scale-110 blur-2xl saturate-[1.15]")}
-        />
-        {slide.backdrop.video && <Footage src={slide.backdrop.video} live={live} />}
-      </motion.div>
-      <div aria-hidden className="absolute inset-0 -z-10 bg-black/58" />
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,oklch(0_0_0/0.6),transparent_24%,transparent_62%,oklch(0_0_0/0.9))]"
-      />
-
-      <div className={cn(FRAME, "flex h-full items-center pb-32 pt-24 md:pb-36")}>
-        <div
-          className={cn(
-            "grid w-full items-center gap-8 md:gap-10",
-            // Centred when the words stand alone or above the picture; beside it, they keep to their column.
-            visual ? "justify-items-center text-center lg:grid-cols-2 lg:justify-items-stretch lg:gap-16 lg:text-left" : "justify-items-center text-center"
-          )}
-        >
-          <motion.div
-            className={cn("min-w-0", !visual && "max-w-[46rem]")}
-            style={moving ? { x: wordsX, opacity: wordsOpacity } : undefined}
-          >
-            <p className="text-[0.8125rem] font-medium tracking-[0.02em] text-white/70 md:text-[0.875rem]">{slide.kind}</p>
-            <h4 className="mt-3 text-balance font-display text-[clamp(2.1rem,1.2rem+3.4vw,5rem)] font-[460] leading-[0.95] tracking-[-0.045em] text-white [font-stretch:106%]">
-              {slide.name}
-            </h4>
-            <p
-              className={cn(
-                "mx-auto mt-4 max-w-[40ch] text-pretty text-[clamp(1rem,0.92rem+0.35vw,1.25rem)] leading-[1.45] text-white/80 md:mt-5",
-                visual && "lg:mx-0"
-              )}
-            >
-              {slide.line}
-            </p>
-            {slide.figure && (
-              <p className={cn("mt-6 flex flex-col items-center gap-2 md:mt-9", visual && "lg:items-start")}>
-                <span className="font-display text-[clamp(3.2rem,2rem+5vw,8rem)] font-[440] leading-[0.85] tracking-[-0.055em] text-signal tabular-nums [font-stretch:108%]">
-                  {slide.figure.figure}
-                </span>
-                <span className="text-[0.875rem] text-white/75 md:text-[0.9375rem]">{slide.figure.label}</span>
-              </p>
-            )}
-          </motion.div>
-
-          {visual && (
-            <motion.div
-              className="flex min-w-0 flex-col items-center gap-4"
-              style={moving ? { x: visualX, opacity: visualOpacity, scale: visualScale } : undefined}
-            >
-              {slide.phones && (
-                <ul className="grid w-full max-w-[34rem] grid-cols-4 gap-2.5 sm:gap-3.5">
-                  {slide.phones.map((s) => (
-                    <li
-                      key={s.src}
-                      className="overflow-hidden rounded-[14px] border border-white/15 bg-black shadow-[0_24px_60px_-20px_black] sm:rounded-[18px]"
-                    >
-                      <Image src={s.src} width={s.width} height={s.height} alt={s.alt} sizes="(min-width: 1024px) 130px, 22vw" className="h-auto w-full" />
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {slide.picture && (
-                <div
-                  className={cn(
-                    "overflow-hidden rounded-[16px] border border-white/15 bg-black shadow-[0_30px_80px_-24px_black]",
-                    slide.phones ? "hidden w-full max-w-[34rem] sm:block" : tall ? "w-auto" : "w-full"
-                  )}
-                  style={!slide.phones && !tall ? { maxWidth: `${slide.picture.width}px` } : undefined}
-                >
-                  <Image
-                    src={slide.picture.src}
-                    width={slide.picture.width}
-                    height={slide.picture.height}
-                    alt={slide.picture.alt}
-                    sizes="(min-width: 1024px) 560px, 90vw"
-                    className={cn("h-auto", tall ? "max-h-[30svh] w-auto lg:max-h-[60svh]" : "w-full")}
-                  />
-                </div>
-              )}
-              {slide.cards && (
-                <ul className="grid w-full max-w-[30rem] gap-2.5 md:gap-3">
-                  {slide.cards.map((card) => (
-                    <li key={card.name} className="rounded-[16px] border border-white/15 bg-black/45 px-5 py-4 backdrop-blur-md md:px-6 md:py-5">
-                      <p className="text-[1rem] font-medium text-white md:text-[1.0625rem]">{card.name}</p>
-                      <p className="mt-1 hidden text-[0.875rem] leading-snug text-white/70 sm:block">{card.line}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </motion.div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------------------------------------------------------ */
 /* The rest of the record                                                                                               */
 /* ------------------------------------------------------------------------------------------------------------------ */
 
@@ -627,41 +325,5 @@ function Also({ lines, reduce }: { lines: string[]; reduce: boolean }) {
         ))}
       </ul>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------------------------------------------------------ */
-/* Footage                                                                                                              */
-/* ------------------------------------------------------------------------------------------------------------------ */
-
-/**
- * Silent footage over its first frame: nothing loads until it is first `live`; it plays while `live` and holds its
- * frame otherwise, and fades in over the still once it is actually playing.
- */
-function Footage({ src, live }: { src: string; live: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    if (live) video.play().catch(() => {});
-    else video.pause();
-  }, [live]);
-
-  return (
-    <video
-      ref={ref}
-      src={src}
-      muted
-      loop
-      playsInline
-      preload="none"
-      disablePictureInPicture
-      disableRemotePlayback
-      tabIndex={-1}
-      onPlaying={() => setShown(true)}
-      className={cn("absolute inset-0 size-full object-cover transition-opacity duration-700", shown ? "opacity-100" : "opacity-0")}
-    />
   );
 }
