@@ -22,14 +22,14 @@ export function TimelineRecord() {
     // No heading of its own: a strip of figures under the opening. The label is for screen readers.
     <section id="record" data-nav-tone="dark" aria-label="The record in figures" className="relative pt-16 md:pt-24">
       <div className="container-site">
-        <ul className="grid grid-cols-1 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 border-t border-line lg:grid-cols-3">
           {RECORD.map((r, i) => (
             <motion.li
               key={r.label}
               // Rules between the columns: every cell but the last in its row, two to a row and then three.
               className={cn(
                 "border-b border-line",
-                i % 2 === 0 ? "sm:border-r" : "sm:border-r-0",
+                i % 2 === 0 ? "border-r" : "border-r-0",
                 i % 3 === 2 ? "lg:border-r-0" : "lg:border-r"
               )}
               initial={reduce ? false : { opacity: 0, y: 14 }}
@@ -46,12 +46,16 @@ export function TimelineRecord() {
                     reduce
                   );
                 }}
-                className="group flex h-full flex-col gap-3 px-1 py-7 outline-none transition-colors duration-300 hover:bg-white/[0.025] focus-visible:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/60 sm:px-6 md:py-9"
+                className={cn(
+                  "group flex h-full flex-col gap-2.5 py-6 outline-none transition-colors duration-300 hover:bg-white/[0.025] focus-visible:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/60 sm:gap-3 sm:pl-6 sm:pr-6 md:py-9",
+                  // Two to a row on a phone: the left column flush with the page's edge, the right clear of the rule.
+                  i % 2 === 0 ? "pl-1 pr-4" : "pl-5 pr-1"
+                )}
               >
-                <span className="font-display text-[clamp(2.6rem,1.9rem+2.4vw,4rem)] font-[420] leading-none tracking-[-0.045em] text-fg tabular-nums [font-stretch:108%] transition-colors duration-300 group-hover:text-signal">
+                <span className="font-display text-[clamp(1.9rem,1.1rem+3.2vw,4rem)] font-[420] leading-none tracking-[-0.045em] text-fg tabular-nums [font-stretch:108%] transition-colors duration-300 group-hover:text-signal">
                   {r.figure}
                 </span>
-                <span className="max-w-[30ch] text-[0.9375rem] leading-snug text-fg-muted">{r.label}</span>
+                <span className="max-w-[30ch] text-[0.875rem] leading-snug text-fg-muted sm:text-[0.9375rem]">{r.label}</span>
               </a>
             </motion.li>
           ))}

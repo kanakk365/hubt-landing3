@@ -98,7 +98,7 @@ function Opening({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,oklch(0_0_0/0.55),transparent_22%,transparent_62%,black)]" />
       </motion.div>
 
-      <div className={cn(FRAME, "relative w-full py-32 text-center md:py-36")}>
+      <div className={cn(FRAME, "relative w-full py-24 text-center sm:py-32 md:py-36")}>
         <motion.p
           initial={reduce ? false : { opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -121,7 +121,10 @@ function Opening({ chapter, index, reduce }: { chapter: TimelineChapter; index: 
             // A long name (two companies credited together) is set smaller, so it holds to two lines.
             chapter.company.length > 16
               ? "max-w-[16ch] text-[clamp(2.6rem,1rem+5.6vw,7rem)]"
-              : "text-[clamp(3.4rem,1.2rem+9.5vw,11.5rem)]"
+              : // One long word ("DestinationKP") can't wrap, so on a phone it is set to fit the screen's width.
+                Math.max(...chapter.company.split(" ").map((w) => w.length)) > 10
+                ? "text-[clamp(2.5rem,0.4rem+10.5vw,11.5rem)]"
+                : "text-[clamp(3.4rem,1.2rem+9.5vw,11.5rem)]"
           )}
         />
 
@@ -211,14 +214,15 @@ function Words({ text, reduce, className }: { text: string; reduce: boolean; cla
 const FIGURE_GRID: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2",
-  3: "grid-cols-1 sm:grid-cols-3",
+  // Three on a phone: two side by side, the third under them.
+  3: "grid-cols-2 sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1",
   4: "grid-cols-2 lg:grid-cols-4",
 };
 
 /** The chapter's figures, side by side and centred, each under a short rule that draws in as its number counts up. */
 function Figures({ figures, reduce }: { figures: TimelineNumber[]; reduce: boolean }) {
   return (
-    <dl className={cn("mx-auto mt-12 grid max-w-[64rem] gap-x-6 gap-y-9 md:mt-16", FIGURE_GRID[figures.length] ?? "grid-cols-2")}>
+    <dl className={cn("mx-auto mt-10 grid max-w-[64rem] gap-x-6 gap-y-8 md:mt-16 md:gap-y-9", FIGURE_GRID[figures.length] ?? "grid-cols-2")}>
       {figures.map((f, i) => (
         <motion.div
           key={f.label}
@@ -236,7 +240,7 @@ function Figures({ figures, reduce }: { figures: TimelineNumber[]; reduce: boole
               variants={{ hidden: { scaleX: 0 }, shown: { scaleX: 1, transition: { duration: 0.9, ease: EXPO } } }}
             />
             <motion.span
-              className="block font-display text-[clamp(2.3rem,1.4rem+3.2vw,4.75rem)] font-[440] leading-none tracking-[-0.05em] text-white tabular-nums [font-stretch:108%]"
+              className="block font-display text-[clamp(2.1rem,1.4rem+3.2vw,4.75rem)] font-[440] leading-none tracking-[-0.05em] text-white tabular-nums [font-stretch:108%]"
               variants={{ hidden: { opacity: 0, y: 18 }, shown: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EXPO } } }}
             >
               <Count figure={f.figure} reduce={reduce} />

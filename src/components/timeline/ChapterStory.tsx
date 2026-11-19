@@ -29,7 +29,8 @@ type Open = (content: DialogContent) => void;
  * its words beneath. The line fills as you go, a mark for each picture, and each mark jumps to its picture. A picture
  * with a film carries a play button that opens it in a popup; patents and photos open at full size.
  *
- * On narrow screens, and with reduced motion, the overview comes first and the pictures follow it, one after another.
+ * On narrow screens, and with reduced motion, what the overview adds comes first and the pictures follow in a strip
+ * you swipe sideways.
  */
 export function ChapterStory({ chapter, reduce }: { chapter: TimelineChapter; reduce: boolean }) {
   const slides = chapter.scene.slides ?? [];
@@ -40,24 +41,9 @@ export function ChapterStory({ chapter, reduce }: { chapter: TimelineChapter; re
   return (
     <>
       {!reduce && <Pinned chapter={chapter} slides={slides} films={films} open={setDialog} />}
-      <div className={cn(FRAME, "py-14 md:py-20", !reduce && "lg:hidden")}>
-        <Overview chapter={chapter} />
-        <ol className="mt-5 grid gap-5 md:mt-6 md:gap-6">
-          {slides.map((slide, i) => (
-            <li key={slide.name} className={cn(PLATE, "flex flex-col")}>
-              <div className={BAR}>
-                <span className="truncate">{slide.kind}</span>
-                <span className="shrink-0 tabular-nums">
-                  {pad(i + 1)} / {pad(slides.length)}
-                </span>
-              </div>
-              <div className={cn("relative grid sm:aspect-[16/10]", slide.patents ? "aspect-[4/5]" : "aspect-[4/3]")}>
-                <Stage slide={slide} films={films} live={false} open={setDialog} stacked />
-              </div>
-              <Caption slide={slide} />
-            </li>
-          ))}
-        </ol>
+      <div className={cn("pb-16 pt-4 md:pb-20", !reduce && "lg:hidden")}>
+        <Notes chapter={chapter} />
+        <Strip chapter={chapter} slides={slides} films={films} open={setDialog} reduce={reduce} />
       </div>
       <TimelineDialog content={dialog} onClose={() => setDialog(null)} />
     </>
@@ -190,14 +176,169 @@ function Pinned({ chapter, slides, films, open }: { chapter: TimelineChapter; sl
   );
 }
 
-function StepButton({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
+/**
+ * Narrow screens: what the overview adds to the opening above it (the opening already gave the name, the line and
+ * the figures), so a fuller account and the rest of the record. Nothing when it adds nothing.
+ */
+function Notes({ chapter }: { chapter: TimelineChapter }) {
+  const { scene } = chapter;
+  const text = scene.overview?.text;
+  if (!text && !scene.also) return null;
+  return (
+    <div className={cn(FRAME, "mb-6")}>
+      <div className={PLATE}>
+        <div className={BAR}>
+          <b className="font-medium text-white">Overview</b>
+          <span className="tabular-nums text-signal">{chapter.years ? `${chapter.years.from}–${chapter.years.to}` : chapter.marker}</span>
+        </div>
+        <div className="px-6 py-6">
+          {text && <p className="text-pretty text-[1rem] leading-[1.6] text-white/78">{text}</p>}
+          {scene.also && (
+            <ul className={cn("grid gap-3", text && "mt-5 border-t border-white/[0.09] pt-5")}>
+              {scene.also.map((line) => (
+                <li key={line} className="flex gap-3 text-[0.9375rem] leading-[1.55] text-white/68">
+                  <span aria-hidden className="mt-[0.55em] size-1.5 shrink-0 bg-signal" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Narrow screens: the pictures side by side in a strip you swipe, the next one peeking in at the edge, with a mark
+ * for each picture and buttons to step through them beneath.
+ */
+function Strip({
+  chapter,
+  slides,
+  films,
+  open,
+  reduce,
+}: {
+  chapter: TimelineChapter;
+  slides: TimelineSlide[];
+  films: TimelineFilm[];
+  open: Open;
+  reduce: boolean;
+}) {
+  const strip = useRef<HTMLOListElement>(null);
+  const [at, setAt] = useState(0);
+  const count = slides.length;
+
+  /** How far the strip scrolls to bring picture `i` to its start. */
+  const stopAt = (el: HTMLOListElement, i: number) =>
+    (el.children[i] as HTMLElement).offsetLeft - (el.children[0] as HTMLElement).offsetLeft;
+
+  // The picture nearest the start of the strip is the current one; at the very end, the last.
+  const onScroll = () => {
+    const el = strip.current;
+    if (!el) return;
+    let best = 0;
+    for (let i = 1; i < count; i++) if (Math.abs(stopAt(el, i) - el.scrollLeft) < Math.abs(stopAt(el, best) - el.scrollLeft)) best = i;
+    const end = el.scrollLeft >= el.scrollWidth - el.clientWidth - 4;
+    setAt(end ? count - 1 : best);
+  };
+
+  const go = (i: number) => {
+    const el = strip.current;
+    if (!el || i < 0 || i >= count) return;
+    el.scrollTo({ left: stopAt(el, i), behavior: reduce ? "auto" : "smooth" });
+  };
+
+  return (
+    <div role="group" aria-roledescription="carousel" aria-label={`${chapter.company}: pictures`}>
+      <ol
+        ref={strip}
+        onScroll={onScroll}
+        className="relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-[var(--edge)] [scroll-padding-inline:var(--edge)] [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden"
+      >
+        {slides.map((slide, i) => (
+          <li
+            key={slide.name}
+            aria-label={`${pad(i + 1)} of ${pad(count)}: ${slide.name}`}
+            className={cn(PLATE, "flex w-[calc(100vw-4.5rem)] max-w-[26rem] shrink-0 snap-start flex-col")}
+          >
+            <div className={BAR}>
+              <span className="truncate">{slide.kind}</span>
+              <span className="shrink-0 tabular-nums">
+                {pad(i + 1)} / {pad(count)}
+              </span>
+            </div>
+            <div className="relative aspect-[4/5]">
+              <Stage slide={slide} films={films} live={false} open={open} />
+            </div>
+            <div className="flex-1">
+              <Caption slide={slide} />
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div className={cn(FRAME, "mt-4 flex items-center justify-between gap-4")}>
+        <ol className="flex flex-wrap items-center gap-1.5" aria-label="Pictures">
+          {slides.map((s, i) => (
+            <li key={s.name}>
+              <button
+                type="button"
+                onClick={() => go(i)}
+                aria-label={s.name}
+                aria-current={i === at ? "true" : undefined}
+                className="flex h-6 cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+              >
+                <span
+                  className={cn(
+                    "block h-[3px] rounded-full transition-[width,background-color] duration-500",
+                    i === at ? "w-6 bg-signal" : "w-3 bg-white/25"
+                  )}
+                />
+              </button>
+            </li>
+          ))}
+        </ol>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="text-[0.8125rem] tabular-nums text-white/60" aria-live="polite">
+            {pad(at + 1)} / {pad(count)}
+          </span>
+          <StepButton label="Previous picture" onClick={() => go(at - 1)} disabled={at === 0} big>
+            <ChevronLeft className="size-4" />
+          </StepButton>
+          <StepButton label="Next picture" onClick={() => go(at + 1)} disabled={at === count - 1} big>
+            <ChevronRight className="size-4" />
+          </StepButton>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StepButton({
+  label,
+  onClick,
+  disabled,
+  big,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  big?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-white/15 text-white outline-none transition-[color,border-color,opacity] duration-300 hover:border-signal hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 disabled:cursor-default disabled:opacity-30 disabled:hover:border-white/15 disabled:hover:text-white"
+      className={cn(
+        big ? "size-10" : "size-7",
+        "flex cursor-pointer items-center justify-center rounded-full border border-white/15 text-white outline-none transition-[color,border-color,opacity] duration-300 hover:border-signal hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60 disabled:cursor-default disabled:opacity-30 disabled:hover:border-white/15 disabled:hover:text-white"
+      )}
     >
       {children}
     </button>
@@ -290,22 +431,18 @@ function Caption({ slide }: { slide: TimelineSlide }) {
 
 /**
  * One picture, filling its box: the slide's backdrop (its footage playing while `live`), and over it whatever the
- * slide shows, from phone screens to a patent's front page. A slide with a film carries a play button. When `stacked`
- * (narrow screens), a slide made mostly of words (a patent, the cards) lets its box grow to fit them instead of
- * spilling over the box's edges.
+ * slide shows, from phone screens to a patent's front page. A slide with a film carries a play button.
  */
 function Stage({
   slide,
   films,
   live,
   open,
-  stacked,
 }: {
   slide: TimelineSlide;
   films: TimelineFilm[];
   live: boolean;
   open: Open;
-  stacked?: boolean;
 }) {
   const film = slide.film ? films.find((f) => f.id === slide.film) : undefined;
   const front = slide.patent ? (
@@ -324,10 +461,8 @@ function Stage({
     <Cards slide={slide} />
   ) : null;
 
-  const grow = stacked && !!(slide.patent || slide.cards);
-
   return (
-    <div className={cn("isolate", grow ? "relative" : "absolute inset-0")}>
+    <div className="absolute inset-0 isolate">
       <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
         <Image
           src={slide.backdrop.src}
@@ -346,7 +481,7 @@ function Stage({
         )}
       />
       {front && (
-        <div className={cn("flex items-center justify-center p-5 md:p-7", grow ? "relative h-full py-7" : "absolute inset-0")}>{front}</div>
+        <div className="absolute inset-0 flex items-center justify-center p-5 md:p-7">{front}</div>
       )}
       {film && <PlayButton film={film} corner={!!front} onClick={() => open({ kind: "film", films, id: film.id })} />}
     </div>
@@ -525,7 +660,7 @@ function PatentSheet({ patent, open }: { patent: TimelinePatent; open: Open }) {
         <p className="mt-2 text-[0.8125rem] text-white/60">
           Granted {patent.granted} · {patent.inventor}
         </p>
-        <blockquote className="mt-4 line-clamp-[8] border-l-2 border-signal pl-4 text-pretty text-[0.9375rem] leading-[1.6] text-white/85">
+        <blockquote className="mt-4 line-clamp-[7] border-l-2 sm:line-clamp-[8] border-signal pl-4 text-pretty text-[0.9375rem] leading-[1.6] text-white/85">
           {patent.abstract}
         </blockquote>
         <button
